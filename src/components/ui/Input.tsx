@@ -9,6 +9,8 @@ interface InputProps {
   placeholder?: string;
   value: string;
   onChangeText: (text: string) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   error?: string;
   secureTextEntry?: boolean;
   multiline?: boolean;
@@ -27,6 +29,8 @@ export const Input: React.FC<InputProps> = ({
   placeholder,
   value,
   onChangeText,
+  onFocus,
+  onBlur,
   error,
   secureTextEntry = false,
   multiline = false,
@@ -42,27 +46,15 @@ export const Input: React.FC<InputProps> = ({
   const [isFocused, setIsFocused] = useState(false);
 
   const getInputContainerStyle = () => {
-    const baseStyle = [GlobalStyles.glassInput, GlobalStyles.row];
-    
-    if (error) {
-      baseStyle.push(styles.inputError);
-    } else if (isFocused) {
-      baseStyle.push(styles.inputFocused);
-    }
-    
-    if (!editable) {
-      baseStyle.push(styles.inputDisabled);
-    }
-    
-    if (multiline) {
-      baseStyle.push(styles.inputMultiline);
-    }
-    
-    if (style) {
-      baseStyle.push(style);
-    }
-    
-    return baseStyle;
+    return [
+      GlobalStyles.glassInput, 
+      GlobalStyles.row,
+      error && styles.inputError,
+      !error && isFocused && styles.inputFocused,
+      !editable && styles.inputDisabled,
+      multiline && styles.inputMultiline,
+      style,
+    ].filter(Boolean);
   };
 
   return (
@@ -90,8 +82,14 @@ export const Input: React.FC<InputProps> = ({
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
           editable={editable}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={() => {
+            setIsFocused(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            onBlur?.();
+          }}
           textAlignVertical={multiline ? 'top' : 'center'}
         />
         

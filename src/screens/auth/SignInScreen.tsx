@@ -114,6 +114,37 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     }
   };
 
+  const handleFacebookSignIn = async () => {
+    setIsLoading(true);
+    setLoading(true);
+    
+    try {
+      // TODO: Implement Facebook sign in
+      console.log('Sign in with Facebook');
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock user data for testing
+      const mockUser = {
+        id: '1',
+        email: 'user@example.com',
+        userType: 'dancer' as const,
+        isOnboarded: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      // Set user in auth store
+      useAuthStore.getState().setUser(mockUser);
+      onSignInSuccess();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to sign in with Facebook. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -150,47 +181,64 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
               Connect with dancers, studios, and events.
             </Text>
 
-            {/* Buttons */}
-            <View style={styles.buttonsContainer}>
-              {/* Primary Button - Email */}
-              <TouchableOpacity 
-                style={[styles.button, styles.primaryButton]}
-                onPress={handleEmailSignUp}
-                disabled={isLoading}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>
-                  Sign Up / Sign In with Email
-                </Text>
-              </TouchableOpacity>
-
-              {/* Secondary Button - Google */}
-              <TouchableOpacity 
-                style={[styles.button, styles.secondaryButton]}
-                onPress={handleGoogleSignIn}
-                disabled={isLoading}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="logo-google" size={20} color={Colors.text.primary} style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.secondaryButtonText]}>
-                  Sign In with Google
-                </Text>
-              </TouchableOpacity>
-
-              {/* Secondary Button - Apple (iOS only) */}
-              {Platform.OS === 'ios' && (
+            {/* Circular Provider Buttons */}
+            <View style={styles.providerButtonsContainer}>
+              <View style={styles.providerButtonsRow}>
+                {/* Google Button */}
                 <TouchableOpacity 
-                  style={[styles.button, styles.secondaryButton]}
-                  onPress={handleAppleSignIn}
+                  style={[styles.providerButton, styles.googleButton]}
+                  onPress={handleGoogleSignIn}
                   disabled={isLoading}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="logo-apple" size={20} color={Colors.text.primary} style={styles.buttonIcon} />
-                  <Text style={[styles.buttonText, styles.secondaryButtonText]}>
-                    Sign In with Apple
-                  </Text>
+                  <Ionicons name="logo-google" size={24} color="#DB4437" />
                 </TouchableOpacity>
-              )}
+
+                {/* Apple Button (iOS only) */}
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity 
+                    style={[styles.providerButton, styles.appleButton]}
+                    onPress={handleAppleSignIn}
+                    disabled={isLoading}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="logo-apple" size={24} color="#000000" />
+                  </TouchableOpacity>
+                )}
+
+                {/* Email Button */}
+                <TouchableOpacity 
+                  style={[styles.providerButton, styles.emailButton]}
+                  onPress={handleEmailSignUp}
+                  disabled={isLoading}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="mail" size={24} color="#4285F4" />
+                </TouchableOpacity>
+
+                {/* Facebook Button */}
+                <TouchableOpacity 
+                  style={[styles.providerButton, styles.facebookButton]}
+                  onPress={handleFacebookSignIn}
+                  disabled={isLoading}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Not Registered Link */}
+            <View style={styles.notRegisteredContainer}>
+              <Text style={styles.notRegisteredText}>
+                Not Registered?{' '}
+                <Text 
+                  style={styles.signUpLink}
+                  onPress={onNavigateToSignUp}
+                >
+                  Sign Up
+                </Text>
+              </Text>
             </View>
 
             {/* Legal Text */}
@@ -243,47 +291,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
   },
-  buttonsContainer: {
-    marginBottom: 24,
-  },
-  button: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    marginBottom: 12,
-    flexDirection: 'row',
+  providerButtonsContainer: {
+    marginBottom: 32,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  primaryButton: {
-    backgroundColor: Colors.blue.primary,
-    shadowColor: Colors.blue.primary,
+  providerButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
+  providerButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  secondaryButton: {
-    backgroundColor: Colors.background.secondary,
+  googleButton: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: Colors.glass.border,
+    borderColor: '#E0E0E0',
   },
-  buttonText: {
-    fontSize: 16,
+  appleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  emailButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  facebookButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  notRegisteredContainer: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  notRegisteredText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+  signUpLink: {
+    fontSize: 14,
+    color: Colors.blue.primary,
     fontWeight: '600',
-    textAlign: 'center',
-  },
-  primaryButtonText: {
-    color: Colors.text.primary,
-  },
-  secondaryButtonText: {
-    color: Colors.text.primary,
-  },
-  buttonIcon: {
-    marginRight: 8,
+    textDecorationLine: 'underline',
   },
   legalText: {
     fontSize: 12,

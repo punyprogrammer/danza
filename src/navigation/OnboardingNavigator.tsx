@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
+import { Animated, Dimensions, View } from 'react-native';
 import { UserTypeSelectionScreen } from '../screens/onboarding/UserTypeSelectionScreen';
 import { DancerOnboardingScreen1 } from '../screens/onboarding/DancerOnboardingScreen1';
 import { DancerOnboardingScreen2 } from '../screens/onboarding/DancerOnboardingScreen2';
 import { OrganizerOnboardingScreen1 } from '../screens/onboarding/OrganizerOnboardingScreen1';
 import { OnboardingCompleteScreen } from '../screens/onboarding/OnboardingCompleteScreen';
 import { useOnboardingStore } from '../stores/onboardingStore';
+import { Colors } from '../styles/colors';
 
 interface OnboardingNavigatorProps {
   onOnboardingComplete: () => void;
@@ -14,89 +16,145 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
   onOnboardingComplete,
 }) => {
   const { currentStep, userType, nextStep, prevStep } = useOnboardingStore();
+  
+  // Animation values
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const { width: screenWidth } = Dimensions.get('window');
+
+  // Animate screen transitions
+  const animateTransition = (direction: 'forward' | 'backward', callback: () => void) => {
+    const slideValue = direction === 'forward' ? -screenWidth : screenWidth;
+    
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: slideValue,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      callback();
+      slideAnim.setValue(direction === 'forward' ? screenWidth : -screenWidth);
+      fadeAnim.setValue(0);
+      
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
 
   const handleUserTypeContinue = () => {
-    nextStep();
+    animateTransition('forward', nextStep);
   };
 
   const handleDancerContinue = () => {
-    nextStep();
+    animateTransition('forward', nextStep);
   };
 
   const handleDancerBack = () => {
-    prevStep();
+    animateTransition('backward', prevStep);
   };
 
   const handleOrganizerContinue = () => {
-    nextStep();
+    animateTransition('forward', nextStep);
   };
 
   const handleOrganizerBack = () => {
-    prevStep();
+    animateTransition('backward', prevStep);
   };
 
-  // User Type Selection
-  if (currentStep === 0) {
+  const renderCurrentScreen = () => {
+    // User Type Selection
+    if (currentStep === 0) {
+      return <UserTypeSelectionScreen onContinue={handleUserTypeContinue} />;
+    }
+
+    // Dancer Onboarding Flow
+    if (userType === 'dancer') {
+      switch (currentStep) {
+        case 1:
+          return (
+            <DancerOnboardingScreen1
+              onContinue={handleDancerContinue}
+              onBack={handleDancerBack}
+            />
+          );
+        case 2:
+          return (
+            <DancerOnboardingScreen2
+              onContinue={handleDancerContinue}
+              onBack={handleDancerBack}
+            />
+          );
+        case 3:
+          return (
+            <OnboardingCompleteScreen
+              onComplete={onOnboardingComplete}
+            />
+          );
+      }
+    }
+
+    // Organizer Onboarding Flow
+    if (userType === 'organizer') {
+      switch (currentStep) {
+        case 1:
+          return (
+            <OrganizerOnboardingScreen1
+              onContinue={handleOrganizerContinue}
+              onBack={handleOrganizerBack}
+            />
+          );
+        case 2:
+          return (
+            <OnboardingCompleteScreen
+              onComplete={onOnboardingComplete}
+            />
+          );
+      }
+    }
+
+    // Instructor Onboarding Flow (if needed in the future)
+    if (userType === 'instructor') {
+      switch (currentStep) {
+        case 1:
+          return (
+            <OnboardingCompleteScreen
+              onComplete={onOnboardingComplete}
+            />
+          );
+      }
+    }
+
+    // Default fallback
     return <UserTypeSelectionScreen onContinue={handleUserTypeContinue} />;
-  }
+  };
 
-  // Dancer Onboarding Flow
-  if (userType === 'dancer') {
-    switch (currentStep) {
-      case 1:
-        return (
-          <DancerOnboardingScreen1
-            onContinue={handleDancerContinue}
-            onBack={handleDancerBack}
-          />
-        );
-      case 2:
-        return (
-          <DancerOnboardingScreen2
-            onContinue={handleDancerContinue}
-            onBack={handleDancerBack}
-          />
-        );
-      case 3:
-        return (
-          <OnboardingCompleteScreen
-            onComplete={onOnboardingComplete}
-          />
-        );
-    }
-  }
-
-  // Organizer Onboarding Flow
-  if (userType === 'organizer') {
-    switch (currentStep) {
-      case 1:
-        return (
-          <OrganizerOnboardingScreen1
-            onContinue={handleOrganizerContinue}
-            onBack={handleOrganizerBack}
-          />
-        );
-      case 2:
-        return (
-          <OnboardingCompleteScreen
-            onComplete={onOnboardingComplete}
-          />
-        );
-    }
-  }
-
-  // Instructor Onboarding Flow (if needed in the future)
-  if (userType === 'instructor') {
-    switch (currentStep) {
-      case 1:
-        return (
-          <OnboardingCompleteScreen
-            onComplete={onOnboardingComplete}
-          />
-        );
-    }
-  }
-
-  // Default fallback
-  return <UserTypeSelectionScreen onContinue={handleUserTypeContinue} />;
+  return (
+    <View style={{ flex: 1, backgroundColor: Colors.background.primary }}>
+      <Animated.View 
+        style={{ 
+          flex: 1,
+          transform: [{ translateX: slideAnim }],
+          opacity: fadeAnim,
+        }}
+      >
+        {renderCurrentScreen()}
+      </Animated.View>
+    </View>
+  );
 };

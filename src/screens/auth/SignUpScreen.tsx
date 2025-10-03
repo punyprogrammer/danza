@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, KeyboardAvoidingView, Platform, Alert, StyleSheet, Animated } from 'react-native';
+import { View, Text, SafeAreaView, KeyboardAvoidingView, Platform, Alert, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +25,17 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const { setLoading } = useAuthStore();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  
+  // Validation states
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [emailShakeAnim] = useState(new Animated.Value(0));
+  const [passwordShakeAnim] = useState(new Animated.Value(0));
+  const [confirmPasswordShakeAnim] = useState(new Animated.Value(0));
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   React.useEffect(() => {
     Animated.parallel([
@@ -41,19 +52,208 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     ]).start();
   }, []);
 
+  // Shake animation function
+  const triggerShakeAnimation = (animValue: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: -10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 10,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // Email validation
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password validation
+  const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    if (password.length < 8) {
+      errors.push('Password must be at least 8 characters');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    }
+    if (!/\d/.test(password)) {
+      errors.push('Password must contain at least one number');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('Password must contain at least one special character');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  };
+
+  // Handle email change (no validation on change)
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    // Clear error when user starts typing
+    if (emailError) {
+      setEmailError('');
+    }
+  };
+
+  // Handle password change (no validation on change)
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    // Clear error when user starts typing
+    if (passwordError) {
+      setPasswordError('');
+    }
+    // Clear confirm password error if passwords now match
+    if (confirmPassword.length > 0 && text === confirmPassword && confirmPasswordError) {
+      setConfirmPasswordError('');
+    }
+  };
+
+  // Handle confirm password change (no validation on change)
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    // Clear error when user starts typing
+    if (confirmPasswordError) {
+      setConfirmPasswordError('');
+    }
+  };
+
+  // Handle email blur validation
+  const handleEmailBlur = () => {
+    if (email.length === 0) {
+      setEmailError('Email is required');
+      triggerShakeAnimation(emailShakeAnim);
+    } else if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      triggerShakeAnimation(emailShakeAnim);
+    }
+  };
+
+  // Handle password focus
+  const handlePasswordFocus = () => {
+    setIsPasswordFocused(true);
+  };
+
+  // Handle password blur validation
+  const handlePasswordBlur = () => {
+    setIsPasswordFocused(false);
+    if (password.length === 0) {
+      setPasswordError('Password is required');
+      triggerShakeAnimation(passwordShakeAnim);
+    } else {
+      const validation = validatePassword(password);
+      if (!validation.isValid) {
+        setPasswordError(validation.errors[0]);
+        triggerShakeAnimation(passwordShakeAnim);
+      }
+    }
+  };
+
+  // Handle confirm password blur validation
+  const handleConfirmPasswordBlur = () => {
+    if (confirmPassword.length === 0) {
+      setConfirmPasswordError('Confirm password is required');
+      triggerShakeAnimation(confirmPasswordShakeAnim);
+    } else if (confirmPassword !== password) {
+      setConfirmPasswordError('Passwords do not match');
+      triggerShakeAnimation(confirmPasswordShakeAnim);
+    }
+  };
+
+  // Check if form is valid
+  const isFormValid = () => {
+    const isEmailValid = email.length > 0 && validateEmail(email);
+    const isPasswordValid = password.length > 0 && validatePassword(password).isValid;
+    const isConfirmPasswordValid = confirmPassword.length > 0 && confirmPassword === password;
+    
+    return isEmailValid && isPasswordValid && isConfirmPasswordValid;
+  };
+
+  // Password requirements with validation status
+  const getPasswordRequirements = () => {
+    const requirements = [
+      { text: 'At least 8 characters', met: password.length >= 8 },
+      { text: 'One uppercase letter', met: /[A-Z]/.test(password) },
+      { text: 'One lowercase letter', met: /[a-z]/.test(password) },
+      { text: 'One number', met: /\d/.test(password) },
+      { text: 'One special character', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
+    ];
+    return requirements;
+  };
+
   const handleEmailSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+    // Validate all fields
+    let hasErrors = false;
+    
+    // Check for empty fields
+    if (!email) {
+      setEmailError('Email is required');
+      triggerShakeAnimation(emailShakeAnim);
+      hasErrors = true;
+    }
+    
+    if (!password) {
+      setPasswordError('Password is required');
+      triggerShakeAnimation(passwordShakeAnim);
+      hasErrors = true;
+    }
+    
+    if (!confirmPassword) {
+      setConfirmPasswordError('Confirm password is required');
+      triggerShakeAnimation(confirmPasswordShakeAnim);
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
       return;
     }
 
+    // Validate email format
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      triggerShakeAnimation(emailShakeAnim);
+      hasErrors = true;
+    }
+
+    // Validate password requirements
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setPasswordError(passwordValidation.errors[0]);
+      triggerShakeAnimation(passwordShakeAnim);
+      hasErrors = true;
+    }
+
+    // Validate password match
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
+      setConfirmPasswordError('Passwords do not match');
+      triggerShakeAnimation(confirmPasswordShakeAnim);
+      hasErrors = true;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (hasErrors) {
       return;
     }
 
@@ -243,56 +443,46 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
           >
             {/* Header */}
             <View style={[GlobalStyles.centerContent, styles.header]}>
-              <View style={styles.logoContainer}>
-                <Ionicons name="musical-notes" size={60} color={Colors.text.primary} />
-              </View>
-              <Text style={[GlobalStyles.title, styles.appTitle]}>
-                🎭 Danza
-              </Text>
-              <Text style={[GlobalStyles.bodyText, styles.subtitle]}>
-                Join the dance community
+              <Text style={[GlobalStyles.title, styles.registerTitle]}>
+                Register with
               </Text>
             </View>
 
             {/* Social Sign Up Options */}
             <View style={styles.socialButtonsContainer}>
-              {Platform.OS === 'ios' && (
-                <Button
-                  title="Continue with Apple"
-                  onPress={handleAppleSignUp}
-                  variant="social"
-                  icon="logo-apple"
+              <View style={styles.providerButtonsRow}>
+                {/* Google Button */}
+                <TouchableOpacity 
+                  style={[styles.providerButton, styles.googleButton]}
+                  onPress={handleGoogleSignUp}
                   disabled={isLoading}
-                  style={styles.socialButton}
-                />
-              )}
-              
-              <Button
-                title="Continue with Google"
-                onPress={handleGoogleSignUp}
-                variant="social"
-                icon="logo-google"
-                disabled={isLoading}
-                style={styles.socialButton}
-              />
-              
-              <Button
-                title="Continue with Facebook"
-                onPress={handleFacebookSignUp}
-                variant="social"
-                icon="logo-facebook"
-                disabled={isLoading}
-                style={styles.socialButton}
-              />
-              
-              <Button
-                title="Continue with Instagram"
-                onPress={handleInstagramSignUp}
-                variant="social"
-                icon="logo-instagram"
-                disabled={isLoading}
-                style={styles.socialButton}
-              />
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="logo-google" size={24} color="#DB4437" />
+                </TouchableOpacity>
+
+                {/* Apple Button (iOS only) */}
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity 
+                    style={[styles.providerButton, styles.appleButton]}
+                    onPress={handleAppleSignUp}
+                    disabled={isLoading}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="logo-apple" size={24} color="#000000" />
+                  </TouchableOpacity>
+                )}
+
+                {/* Facebook Button */}
+                <TouchableOpacity 
+                  style={[styles.providerButton, styles.facebookButton]}
+                  onPress={handleFacebookSignUp}
+                  disabled={isLoading}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Divider */}
@@ -304,36 +494,91 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
 
             {/* Email Sign Up */}
             <View style={styles.formContainer}>
-              <Input
-                label="Email"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <Animated.View style={{ transform: [{ translateX: emailShakeAnim }] }}>
+                <Input
+                  label="Email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  onBlur={handleEmailBlur}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                {emailError ? (
+                  <Animated.Text style={styles.errorText}>
+                    {emailError}
+                  </Animated.Text>
+                ) : null}
+              </Animated.View>
               
-              <Input
-                label="Password"
-                placeholder="Create a password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              <Animated.View style={{ transform: [{ translateX: passwordShakeAnim }] }}>
+                <Input
+                  label="Password"
+                  placeholder="Create a password"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  onFocus={handlePasswordFocus}
+                  onBlur={handlePasswordBlur}
+                  secureTextEntry={!showPassword}
+                  rightIcon={showPassword ? "eye-off" : "eye"}
+                  onRightIconPress={() => setShowPassword(!showPassword)}
+                />
+                {passwordError ? (
+                  <Animated.Text style={styles.errorText}>
+                    {passwordError}
+                  </Animated.Text>
+                ) : null}
+                
+                {/* Password Requirements */}
+                {isPasswordFocused && password.length > 0 && (
+                  <Animated.View style={styles.requirementsContainer}>
+                    <Text style={styles.requirementsTitle}>Password Requirements:</Text>
+                    {getPasswordRequirements().map((req, index) => (
+                      <Animated.View key={index} style={styles.requirementItem}>
+                        <Ionicons 
+                          name={req.met ? "checkmark-circle" : "ellipse-outline"} 
+                          size={16} 
+                          color={req.met ? "#4CAF50" : "#9E9E9E"} 
+                          style={styles.requirementIcon}
+                        />
+                        <Text style={[
+                          styles.requirementText,
+                          req.met && styles.requirementTextMet
+                        ]}>
+                          {req.text}
+                        </Text>
+                      </Animated.View>
+                    ))}
+                  </Animated.View>
+                )}
+              </Animated.View>
               
-              <Input
-                label="Confirm Password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
+              <Animated.View style={[
+                { transform: [{ translateX: confirmPasswordShakeAnim }] },
+                styles.confirmPasswordContainer
+              ]}>
+                <Input
+                  label="Confirm Password"
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChangeText={handleConfirmPasswordChange}
+                  onBlur={handleConfirmPasswordBlur}
+                  secureTextEntry={!showConfirmPassword}
+                  rightIcon={showConfirmPassword ? "eye-off" : "eye"}
+                  onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                />
+                {confirmPasswordError ? (
+                  <Animated.Text style={styles.errorText}>
+                    {confirmPasswordError}
+                  </Animated.Text>
+                ) : null}
+              </Animated.View>
             </View>
 
             <Button
               title="Create Account"
               onPress={handleEmailSignUp}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid()}
               loading={isLoading}
               style={styles.createAccountButton}
             />
@@ -366,22 +611,51 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 32,
   },
-  logoContainer: {
-    marginBottom: 16,
-  },
-  appTitle: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    opacity: 0.9,
+  registerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
   },
   socialButtonsContainer: {
     marginBottom: 24,
+    alignItems: 'center',
   },
-  socialButton: {
-    marginBottom: 12,
+  providerButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
+  providerButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  googleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  appleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  facebookButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   divider: {
     marginBottom: 24,
@@ -403,5 +677,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
     opacity: 1,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  requirementsContainer: {
+    marginTop: 12,
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  requirementsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  requirementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  requirementIcon: {
+    marginRight: 8,
+  },
+  requirementText: {
+    fontSize: 13,
+    color: '#9E9E9E',
+    flex: 1,
+  },
+  requirementTextMet: {
+    color: '#4CAF50',
+    fontWeight: '500',
+  },
+  confirmPasswordContainer: {
+    marginTop: 20,
   },
 });
