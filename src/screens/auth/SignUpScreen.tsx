@@ -3,13 +3,14 @@ import { View, Text, SafeAreaView, KeyboardAvoidingView, Platform, Alert, StyleS
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { useSignIn, useSignUp, useOAuth } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useOAuth, useUser } from '@clerk/clerk-expo';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useAuthStore } from '../../stores/authStore';
 import { GlobalStyles } from '../../styles/globalStyles';
 import { Colors } from '../../styles/colors';
 import { userService } from '../../services/userService';
+import { AuthLoadingScreen } from '../../components/AuthLoadingScreen';
 import * as WebBrowser from 'expo-web-browser';
 
 interface SignUpScreenProps {
@@ -28,6 +29,7 @@ const EmailSignUpForm: React.FC<EmailSignUpFormProps> = ({ onSuccess, onBack }) 
   const [firstName, setFirstName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signUp, setActive } = useSignUp();
+  const { user: clerkUser } = useUser();
   const { setUser } = useAuthStore();
 
   const handleSignUp = async () => {
@@ -131,6 +133,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const { setLoading } = useAuthStore();
   const { signUp, setActive: setSignUpActive } = useSignUp();
   const { signIn, setActive: setSignInActive } = useSignIn();
+  const { user: clerkUser } = useUser();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
   
@@ -349,27 +352,29 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
         // Create user in Firebase
         try {
           console.log('🔄 Creating user in Firebase for Google sign-up...');
-          const firebaseUser = await userService.ensureUserExists(result, 'google');
+          const firebaseUser = await userService.ensureUserExists(clerkUser, 'google');
           const userProfile = userService.convertToUserProfile(firebaseUser);
           useAuthStore.getState().setUser(userProfile);
           console.log('✅ User created in Firebase for Google sign-up');
         } catch (firebaseError) {
           console.error('❌ Error creating user in Firebase for Google:', firebaseError);
           // Fallback to Clerk data if Firebase fails
-          const fallbackProfile = {
-            id: result.id,
-            email: result.primaryEmailAddress?.emailAddress || '',
-            name: result.fullName || result.username || result.id,
-            avatar_url: result.imageUrl,
-            user_type: (result.publicMetadata?.userType as 'dancer' | 'organizer' | 'instructor') || 'dancer',
-            is_onboarded: (result.publicMetadata?.isOnboarded as boolean) || false,
-            created_at: result.createdAt ? new Date(result.createdAt).toISOString() : new Date().toISOString(),
-            updated_at: result.updatedAt ? new Date(result.updatedAt).toISOString() : new Date().toISOString(),
-            last_sign_in_at: result.lastSignInAt ? new Date(result.lastSignInAt).toISOString() : undefined,
-            is_active: true,
-          };
-          useAuthStore.getState().setUser(fallbackProfile);
-          console.log('⚠️ Using fallback user data from Clerk for Google sign-up');
+          if (clerkUser) {
+            const fallbackProfile = {
+              id: clerkUser.id,
+              email: clerkUser.primaryEmailAddress?.emailAddress || '',
+              name: clerkUser.fullName || clerkUser.username || clerkUser.id,
+              avatar_url: clerkUser.imageUrl,
+              user_type: (clerkUser.publicMetadata?.userType as 'dancer' | 'organizer' | 'instructor') || 'dancer',
+              is_onboarded: (clerkUser.publicMetadata?.isOnboarded as boolean) || false,
+              created_at: clerkUser.createdAt ? new Date(clerkUser.createdAt).toISOString() : new Date().toISOString(),
+              updated_at: clerkUser.updatedAt ? new Date(clerkUser.updatedAt).toISOString() : new Date().toISOString(),
+              last_sign_in_at: clerkUser.lastSignInAt ? new Date(clerkUser.lastSignInAt).toISOString() : undefined,
+              is_active: true,
+            };
+            useAuthStore.getState().setUser(fallbackProfile);
+            console.log('⚠️ Using fallback user data from Clerk for Google sign-up');
+          }
         }
                
                console.log('✅ Clerk Google sign up successful');
@@ -414,7 +419,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                // Create user in Firebase
                try {
                  console.log('🔄 Creating user in Firebase for Apple sign-up...');
-                 const firebaseUser = await userService.ensureUserExists(result, 'apple');
+                 const firebaseUser = await userService.ensureUserExists(clerkUser, 'apple');
                  const userProfile = userService.convertToUserProfile(firebaseUser);
                  useAuthStore.getState().setUser(userProfile);
                  console.log('✅ User created in Firebase for Apple sign-up');
@@ -465,7 +470,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
                // Create user in Firebase
                try {
                  console.log('🔄 Creating user in Firebase for Facebook sign-up...');
-                 const firebaseUser = await userService.ensureUserExists(result, 'facebook');
+                 const firebaseUser = await userService.ensureUserExists(clerkUser, 'facebook');
                  const userProfile = userService.convertToUserProfile(firebaseUser);
                  useAuthStore.getState().setUser(userProfile);
                  console.log('✅ User created in Firebase for Facebook sign-up');
@@ -488,6 +493,10 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
     }
   };
 
+  // Show loading screen during authentication
+  if (isLoading) {
+    return <AuthLoadingScreen message="Creating your account..." />;
+  }
 
   return (
     <LinearGradient

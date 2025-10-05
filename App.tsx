@@ -11,6 +11,8 @@ import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
 import { Colors } from './src/styles/colors';
 import { clerkPublishableKey } from './src/config/clerk';
 import { userService } from './src/services/userService';
+import { ThemeProvider } from './src/components/ThemeProvider';
+import { AuthLoadingScreen } from './src/components/AuthLoadingScreen';
 
 // Custom token cache using expo-secure-store
 const tokenCache = {
@@ -43,6 +45,7 @@ function AppContent() {
   const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const [isAppReady, setIsAppReady] = useState(false);
+  const [isAuthTransitioning, setIsAuthTransitioning] = useState(false);
 
   useEffect(() => {
     // Simulate app initialization
@@ -58,10 +61,15 @@ function AppContent() {
     const syncUserData = async () => {
       if (clerkUser && isSignedIn) {
         try {
+          setIsAuthTransitioning(true);
           console.log('🔄 Syncing user data from Firebase...');
           // Try to fetch user from Firebase first
           const firebaseUser = await userService.ensureUserExists(clerkUser, 'email'); // Default to email, will be updated based on actual auth method
           const userProfile = userService.convertToUserProfile(firebaseUser);
+          
+          // Add a small delay for smooth transition
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
           useAuthStore.getState().setUser(userProfile);
           console.log('✅ User data synced from Firebase');
         } catch (error) {
@@ -79,24 +87,33 @@ function AppContent() {
             last_sign_in_at: clerkUser.lastSignInAt ? new Date(clerkUser.lastSignInAt).toISOString() : undefined,
             is_active: true,
           };
+          
+          // Add a small delay for smooth transition
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
           useAuthStore.getState().setUser(fallbackProfile);
           console.log('⚠️ Using fallback user data from Clerk');
+        } finally {
+          setIsAuthTransitioning(false);
         }
       } else if (!isSignedIn) {
         useAuthStore.getState().setUser(null);
+        setIsAuthTransitioning(false);
       }
     };
 
     syncUserData();
   }, [clerkUser, isSignedIn]);
 
-  // Show loading screen while app is initializing or Clerk is loading
-  if (!isAppReady || isLoading || !clerkLoaded) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors.background.primary, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.blue.primary} />
-      </View>
-    );
+  // Show loading screen while app is initializing, Clerk is loading, or auth is transitioning
+  if (!isAppReady || isLoading || !clerkLoaded || isAuthTransitioning) {
+    const loadingMessage = isAuthTransitioning 
+      ? 'Setting up your profile...' 
+      : !isAppReady 
+        ? 'Initializing app...' 
+        : 'Loading...';
+    
+    return <AuthLoadingScreen message={loadingMessage} />;
   }
 
   // Show authentication flow if user is not authenticated
@@ -144,15 +161,19 @@ function AppContent() {
 export default function App() {
   if (!clerkPublishableKey) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background.primary, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.blue.primary} />
-      </View>
+      <ThemeProvider>
+        <View style={{ flex: 1, backgroundColor: Colors.background.primary, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={Colors.blue.primary} />
+        </View>
+      </ThemeProvider>
     );
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
-      <AppContent />
-    </ClerkProvider>
+    <ThemeProvider>
+      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
+        <AppContent />
+      </ClerkProvider>
+    </ThemeProvider>
   );
 }

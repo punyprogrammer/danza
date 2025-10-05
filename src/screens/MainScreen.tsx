@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { OrganizerNavigator } from '../navigation/OrganizerNavigator';
 import { DancerNavigator } from '../navigation/DancerNavigator';
-import { Colors } from '../styles/colors';
+import { useTheme } from '../components/ThemeProvider';
 
 interface MainScreenProps {
   onSignOut: () => void;
@@ -19,6 +19,7 @@ interface MainScreenProps {
 export const MainScreen: React.FC<MainScreenProps> = ({ onSignOut }) => {
   const { user } = useAuthStore();
   const { resetOnboarding } = useOnboardingStore();
+  const { colors } = useTheme();
   
   const userType = user?.user_type as 'dancer' | 'organizer' | 'instructor';
   
@@ -66,80 +67,77 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onSignOut }) => {
 
   // Default main screen for other user types
   return (
-    <LinearGradient
-      colors={['#1e40af', '#3b82f6', '#60a5fa']}
-      style={{ flex: 1 }}
-    >
-      <StatusBar style="light" />
+    <View style={{ flex: 1, backgroundColor: colors.background.primary }}>
+      <StatusBar style={colors.background.primary === '#FFFFFF' ? 'dark' : 'light'} />
       <SafeAreaView className="flex-1" edges={['top']}>
-        <AppHeader onSignOut={handleSignOut} />
+        <AppHeader onSignOut={handleSignOut} onProfilePress={() => {}} />
         <View className="flex-1 px-6 justify-center">
           {/* Header */}
           <View className="items-center mb-8">
-            <Ionicons name="musical-notes" size={80} color="#ffffff" />
-            <Text className="text-white text-4xl font-bold mt-4 mb-2">
+            <Ionicons name="musical-notes" size={80} color={colors.accent.primary} />
+            <Text style={{ color: colors.text.primary }} className="text-4xl font-bold mt-4 mb-2">
               🎭 Danza
             </Text>
-            <Text className="text-white/90 text-xl text-center">
+            <Text style={{ color: colors.text.secondary }} className="text-xl text-center">
               Welcome to your dance community!
             </Text>
           </View>
 
           {/* User Info */}
-          <View className="bg-white/10 rounded-2xl p-6 mb-8">
+          <View style={{ backgroundColor: colors.background.card, borderRadius: 16, padding: 24, marginBottom: 32, borderWidth: 1, borderColor: colors.glass.border }}>
             <View className="flex-row items-center mb-4">
-              <Ionicons name="person-circle" size={40} color="#ffffff" />
+              <Ionicons name="person-circle" size={40} color={colors.accent.primary} />
               <View className="ml-4">
-                <Text className="text-white text-lg font-semibold">
+                <Text style={{ color: colors.text.primary }} className="text-lg font-semibold">
                   {getUserTypeDisplay(userType)}
                 </Text>
-                <Text className="text-white/80 text-sm">
+                <Text style={{ color: colors.text.secondary }} className="text-sm">
                   Profile completed successfully
                 </Text>
               </View>
             </View>
             
-            <View className="bg-white/10 rounded-xl p-4">
-              <Text className="text-white font-medium mb-2">
+            <View style={{ backgroundColor: colors.background.secondary, borderRadius: 12, padding: 16 }}>
+              <Text style={{ color: colors.text.primary }} className="font-medium mb-2">
                 What's Next?
               </Text>
-              <Text className="text-white/90 text-sm">
+              <Text style={{ color: colors.text.secondary }} className="text-sm">
                 {getUserTypeMessage(userType)}
               </Text>
             </View>
           </View>
 
           {/* Coming Soon Features */}
-          <View className="bg-white/10 rounded-2xl p-6 mb-8">
-            <Text className="text-white font-semibold text-lg mb-4">
+          <View style={{ backgroundColor: colors.background.card, borderRadius: 16, padding: 24, marginBottom: 32, borderWidth: 1, borderColor: colors.glass.border }}>
+            <Text style={{ color: colors.text.primary }} className="font-semibold text-lg mb-4">
               Coming Soon:
             </Text>
             
             <View className="space-y-3">
               <View className="flex-row items-center">
-                <Ionicons name="calendar" size={20} color="#ffffff" />
-                <Text className="text-white/90 text-sm ml-3">
+                <Ionicons name="calendar" size={20} color={colors.accent.primary} />
+                <Text style={{ color: colors.text.secondary }} className="text-sm ml-3">
                   Event Discovery & Booking
                 </Text>
               </View>
               
               <View className="flex-row items-center">
-                <Ionicons name="people" size={20} color="#ffffff" />
-                <Text className="text-white/90 text-sm ml-3">
+                <Ionicons name="people" size={20} color={colors.accent.primary} />
+                <Text style={{ color: colors.text.secondary }} className="text-sm ml-3">
                   Dance Partner Matching
                 </Text>
               </View>
               
               <View className="flex-row items-center">
-                <Ionicons name="chatbubbles" size={20} color="#ffffff" />
-                <Text className="text-white/90 text-sm ml-3">
+                <Ionicons name="chatbubbles" size={20} color={colors.accent.primary} />
+                <Text style={{ color: colors.text.secondary }} className="text-sm ml-3">
                   Community Chat & Forums
                 </Text>
               </View>
               
               <View className="flex-row items-center">
-                <Ionicons name="map" size={20} color="#ffffff" />
-                <Text className="text-white/90 text-sm ml-3">
+                <Ionicons name="map" size={20} color={colors.accent.primary} />
+                <Text style={{ color: colors.text.secondary }} className="text-sm ml-3">
                   Location-based Event Discovery
                 </Text>
               </View>
@@ -148,6 +146,6 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onSignOut }) => {
 
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };

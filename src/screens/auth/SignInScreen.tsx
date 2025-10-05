@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../styles/colors';
 import { userService } from '../../services/userService';
+import { AuthLoadingScreen } from '../../components/AuthLoadingScreen';
 import * as WebBrowser from 'expo-web-browser';
 
 interface SignInScreenProps {
@@ -282,6 +283,11 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     }
   };
 
+  // Show loading screen during authentication
+  if (isLoading) {
+    return <AuthLoadingScreen message="Signing you in..." />;
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -299,7 +305,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           <View style={styles.imageSection}>
             <Image
               source={{
-                uri: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
+                uri: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
               }}
               style={styles.dancerImage}
               resizeMode="cover"
@@ -310,7 +316,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           <View style={styles.uiSection}>
             {/* Title */}
             <Text style={styles.title}>
-              Find your rhythm
+              Danza
             </Text>
             
             {/* Subtitle */}

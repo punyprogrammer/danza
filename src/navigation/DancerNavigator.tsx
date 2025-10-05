@@ -6,10 +6,11 @@ import { Colors } from '../styles/colors';
 import { AppHeader } from '../components/ui/AppHeader';
 import { DancerDashboard } from '../screens/dancer/DancerDashboard';
 import { ExploreScreen } from '../screens/dancer/ExploreScreen';
+import { DancerProfileScreen } from '../screens/dancer/DancerProfileScreen';
 import { useAuthStore } from '../stores/authStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 
-type DancerTab = 'explore' | 'dashboard';
+type DancerTab = 'explore' | 'dashboard' | 'profile';
 
 export const DancerNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DancerTab>('explore');
@@ -26,6 +27,8 @@ export const DancerNavigator: React.FC = () => {
         return <ExploreScreen />;
       case 'dashboard':
         return <DancerDashboard />;
+      case 'profile':
+        return <DancerProfileScreen onBack={() => setActiveTab('explore')} />;
       default:
         return <ExploreScreen />;
     }
@@ -34,7 +37,7 @@ export const DancerNavigator: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <AppHeader onSignOut={handleSignOut} />
+        <AppHeader onSignOut={handleSignOut} onProfilePress={() => setActiveTab('profile')} />
         {/* Main Content */}
         <View style={styles.content}>
           {renderContent()}

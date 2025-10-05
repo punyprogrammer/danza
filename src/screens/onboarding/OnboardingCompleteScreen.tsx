@@ -13,15 +13,10 @@ export const OnboardingCompleteScreen: React.FC<OnboardingCompleteScreenProps> =
   const { userType } = useOnboardingStore();
   
   const handleComplete = async () => {
-    try {
-      // TODO: Save user profile to Firebase
-      // await saveUserProfile();
-      onComplete();
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      // Handle error - maybe show a retry option
-      onComplete();
-    }
+    // The onboarding data has already been saved to Firebase
+    // by the individual onboarding screens (DancerOnboardingScreen2, OrganizerOnboardingScreen1)
+    // This screen just shows the completion message
+    onComplete();
   };
 
   const config = getCompletionConfig(userType || 'dancer');

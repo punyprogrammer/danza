@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -47,6 +48,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   style
 }) => {
   const [imageError, setImageError] = useState(false);
+  const { colors } = useTheme();
 
   const handleBookPress = () => {
     if (onBookPress) {
@@ -61,11 +63,19 @@ export const EventCard: React.FC<EventCardProps> = ({
   if (variant === 'compact') {
     return (
       <TouchableOpacity 
-        style={[styles.compactCard, style]} 
+        style={[
+          styles.compactCard, 
+          { 
+            backgroundColor: colors.background.card,
+            borderColor: colors.glass.border,
+            shadowColor: colors.glass.shadow,
+          }, 
+          style
+        ]} 
         onPress={onPress}
         activeOpacity={0.8}
       >
-        <View style={styles.compactImageContainer}>
+        <View style={[styles.compactImageContainer, { backgroundColor: colors.background.card, borderColor: colors.glass.border }]}>
           {event.image && !imageError ? (
             <Image 
               source={{ uri: event.image }} 
@@ -74,40 +84,40 @@ export const EventCard: React.FC<EventCardProps> = ({
               onError={handleImageError}
             />
           ) : (
-            <View style={styles.compactImageFallback}>
-              <Ionicons name="musical-notes" size={24} color={Colors.text.secondary} />
+            <View style={[styles.compactImageFallback, { backgroundColor: colors.background.secondary }]}>
+              <Ionicons name="musical-notes" size={28} color={colors.text.placeholder} />
             </View>
           )}
         </View>
         
         <View style={styles.compactContent}>
           <View style={styles.compactHeader}>
-            <Text style={styles.compactTitle} numberOfLines={1}>
+            <Text style={[styles.compactTitle, { color: colors.text.primary }]} numberOfLines={1}>
               {event.title}
             </Text>
-            <Text style={styles.compactOrganizer} numberOfLines={1}>
+            <Text style={[styles.compactOrganizer, { color: colors.text.secondary }]} numberOfLines={1}>
               {event.organizer}
             </Text>
           </View>
           
           <View style={styles.compactDetails}>
             <View style={styles.compactDetailRow}>
-              <Ionicons name="calendar-outline" size={12} color={Colors.text.secondary} />
-              <Text style={styles.compactDetailText} numberOfLines={1}>
+              <Ionicons name="calendar-outline" size={14} color={colors.text.placeholder} />
+              <Text style={[styles.compactDetailText, { color: colors.text.secondary }]} numberOfLines={1}>
                 {event.date} • {event.time}
               </Text>
             </View>
             
             <View style={styles.compactDetailRow}>
-              <Ionicons name="location-outline" size={12} color={Colors.text.secondary} />
-              <Text style={styles.compactDetailText} numberOfLines={1}>
+              <Ionicons name="location-outline" size={14} color={colors.text.placeholder} />
+              <Text style={[styles.compactDetailText, { color: colors.text.secondary }]} numberOfLines={1}>
                 {event.venue}
               </Text>
             </View>
             
             <View style={styles.compactDetailRow}>
-              <Ionicons name="musical-notes-outline" size={12} color={Colors.text.secondary} />
-              <Text style={styles.compactDetailText}>
+              <Ionicons name="musical-notes-outline" size={14} color={colors.text.placeholder} />
+              <Text style={[styles.compactDetailText, { color: colors.text.secondary }]}>
                 {event.danceStyle}
               </Text>
             </View>
@@ -115,7 +125,7 @@ export const EventCard: React.FC<EventCardProps> = ({
         </View>
         
         <View style={styles.compactPriceBadge}>
-          <Text style={styles.compactPriceText}>${event.price}</Text>
+          <Text style={[styles.compactPriceText, { color: colors.accent.primary }]}>${event.price}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -218,91 +228,89 @@ const styles = StyleSheet.create({
   // Compact variant styles
   compactCard: {
     flexDirection: 'row',
-    backgroundColor: Colors.background.secondary,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.glass.border,
-    shadowColor: Colors.glass.shadow,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: 12,
-    height: 110,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    marginBottom: 16,
+    height: 120,
     position: 'relative',
   },
   compactImageContainer: {
-    width: 80,
-    height: 110,
-    borderRadius: 0,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginLeft: 15,
+    marginVertical: 25,
+    borderWidth: 2,
     overflow: 'hidden',
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   compactImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 35,
   },
   compactImageFallback: {
     width: '100%',
     height: '100%',
-    backgroundColor: Colors.background.secondary,
+    borderRadius: 35,
     justifyContent: 'center',
     alignItems: 'center',
   },
   compactContent: {
     flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingLeft: 8,
+    justifyContent: 'space-between',
   },
   compactHeader: {
-    marginBottom: 4,
+    marginBottom: 6,
   },
   compactTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 2,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 3,
+    letterSpacing: 0.2,
   },
   compactOrganizer: {
-    fontSize: 11,
-    color: Colors.text.secondary,
+    fontSize: 12,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   compactDetails: {
     flex: 1,
-    justifyContent: 'center',
-    gap: 2,
+    justifyContent: 'flex-end',
+    gap: 4,
   },
   compactDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   compactDetailText: {
-    fontSize: 10,
-    color: Colors.text.secondary,
+    fontSize: 11,
     flex: 1,
+    fontWeight: '500',
   },
   compactPriceBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: Colors.blue.primary,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 40,
+    top: 15,
+    right: 15,
     alignItems: 'center',
   },
   compactPriceText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.text.primary,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 
   // Expanded variant styles

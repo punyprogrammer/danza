@@ -3,14 +3,18 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAuthStore } from '../../stores/authStore';
-import { Colors } from '../../styles/colors';
+import { useThemeStore } from '../../stores/themeStore';
+import { getThemeColors } from '../../styles/themes';
 
 interface AppHeaderProps {
   onSignOut?: () => void;
+  onProfilePress?: () => void;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut, onProfilePress }) => {
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useThemeStore();
+  const colors = getThemeColors(theme);
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -49,20 +53,44 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.glass.background, borderBottomColor: colors.glass.border }]}>
       <View style={styles.leftSection}>
         {/* App Name */}
-        <Text style={styles.appName}>Danza</Text>
+        <Text style={[styles.appName, { color: colors.text.primary }]}>Danza</Text>
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity 
-        style={styles.logoutButton} 
-        onPress={handleSignOut}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="log-out-outline" size={20} color="#FFFFFF" />
-      </TouchableOpacity>
+      <View style={styles.actionsContainer}>
+        {/* Profile Button */}
+        <TouchableOpacity 
+          style={[styles.profileButton, { backgroundColor: colors.background.secondary }]} 
+          onPress={onProfilePress}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="person-outline" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
+
+        {/* Theme Toggle Button */}
+        <TouchableOpacity 
+          style={[styles.themeToggleButton, { backgroundColor: colors.background.secondary }]} 
+          onPress={toggleTheme}
+          activeOpacity={0.7}
+        >
+          <Ionicons 
+            name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'} 
+            size={20} 
+            color={colors.text.primary} 
+          />
+        </TouchableOpacity>
+
+        {/* Logout Button */}
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: colors.background.secondary }]} 
+          onPress={handleSignOut}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="log-out-outline" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -74,10 +102,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: 'rgba(26, 29, 41, 0.95)', // Same as app background with transparency
     borderBottomWidth: 1,
-    borderBottomColor: Colors.glass.border,
-    shadowColor: Colors.glass.shadow,
+    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -85,35 +111,70 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    // Ensure header extends to top of safe area
     marginTop: 0,
   },
   leftSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
   },
   appName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.text.primary, // White text for dark background
     letterSpacing: 1,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  themeToggleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   logoutButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.red.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.glass.border,
-    shadowColor: Colors.glass.shadow,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

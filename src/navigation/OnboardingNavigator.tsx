@@ -63,9 +63,9 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
   };
 
   const handleDancerContinue = () => {
-    // If we're on step 2 (final step for dancers), complete onboarding
+    // If we're on step 2 (final step for dancers), go to completion screen
     if (currentStep === 2) {
-      onOnboardingComplete();
+      animateTransition('forward', nextStep);
     } else {
       animateTransition('forward', nextStep);
     }
@@ -76,7 +76,12 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
   };
 
   const handleOrganizerContinue = () => {
-    animateTransition('forward', nextStep);
+    // If we're on step 1 (final step for organizers), go to completion screen
+    if (currentStep === 1) {
+      animateTransition('forward', nextStep);
+    } else {
+      animateTransition('forward', nextStep);
+    }
   };
 
   const handleOrganizerBack = () => {
@@ -127,17 +132,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
           );
         case 2:
           return (
-            <YoureAllSetScreen
-              config={{
-                title: "You're All Set!",
-                subtitle: "Welcome to the dance community",
-                description: "Your organizer profile is complete. You can now start creating amazing dance events and building your community.",
-                buttonText: "Get Started",
-                illustrationText: {
-                  main: "🎉",
-                  sub: "Ready to organize!"
-                }
-              }}
+            <OnboardingCompleteScreen
               onComplete={onOnboardingComplete}
             />
           );

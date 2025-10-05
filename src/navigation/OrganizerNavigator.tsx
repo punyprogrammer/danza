@@ -6,10 +6,11 @@ import { Colors } from '../styles/colors';
 import { AppHeader } from '../components/ui/AppHeader';
 import { OrganizerDashboard } from '../screens/organizer/OrganizerDashboard';
 import { CreateEventScreen } from '../screens/organizer/CreateEventScreen';
+import { OrganizerProfileScreen } from '../screens/organizer/OrganizerProfileScreen';
 import { useAuthStore } from '../stores/authStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 
-type OrganizerTab = 'dashboard' | 'createEvent';
+type OrganizerTab = 'dashboard' | 'createEvent' | 'profile';
 
 export const OrganizerNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<OrganizerTab>('dashboard');
@@ -26,6 +27,8 @@ export const OrganizerNavigator: React.FC = () => {
         return <OrganizerDashboard />;
       case 'createEvent':
         return <CreateEventScreen />;
+      case 'profile':
+        return <OrganizerProfileScreen onBack={() => setActiveTab('dashboard')} />;
       default:
         return <OrganizerDashboard />;
     }
@@ -34,7 +37,7 @@ export const OrganizerNavigator: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <AppHeader onSignOut={handleSignOut} />
+        <AppHeader onSignOut={handleSignOut} onProfilePress={() => setActiveTab('profile')} />
         {/* Main Content */}
         <View style={styles.content}>
           {renderContent()}
