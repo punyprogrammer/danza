@@ -1,31 +1,78 @@
 import { create } from 'zustand';
-import { User as FirebaseUser } from 'firebase/auth';
-import { User } from '../types';
+import { UserProfile } from '../types/auth';
 
 interface AuthStore {
-  user: User | null;
-  firebaseUser: FirebaseUser | null;
+  user: UserProfile | null;
+  session: any;
   isLoading: boolean;
   isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
-  setFirebaseUser: (user: FirebaseUser | null) => void;
+  isOnboarded: boolean;
+  userType: 'dancer' | 'organizer' | 'instructor' | null;
+  
+  // Actions
+  setUser: (user: UserProfile | null) => void;
+  setSession: (session: any) => void;
   setLoading: (loading: boolean) => void;
-  logout: () => void;
+  setOnboarded: (onboarded: boolean) => void;
+  setUserType: (userType: 'dancer' | 'organizer' | 'instructor') => void;
+  
+  // Authentication methods (stubs for compatibility)
+  signInWithEmail: (email: string, password: string, userType?: 'dancer' | 'organizer') => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name: string, userType?: 'dancer' | 'organizer') => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'apple' | 'facebook', userType?: 'dancer' | 'organizer') => Promise<void>;
+  signOut: () => Promise<void>;
+  
+  // Reset
+  reset: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
-  firebaseUser: null,
+  session: null,
   isLoading: false,
   isAuthenticated: false,
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-  setFirebaseUser: (firebaseUser) => set({ firebaseUser }),
-  setLoading: (isLoading) => set({ isLoading }),
-  logout: () => set({ 
-    user: null, 
-    firebaseUser: null, 
+  isOnboarded: false,
+  userType: null,
+  
+  setUser: (user) => set({ 
+    user, 
+    isAuthenticated: !!user,
+    isOnboarded: user?.is_onboarded || false,
+    userType: user?.user_type || null,
+  }),
+  
+  setSession: (session) => set({ session }),
+  setLoading: (loading) => set({ isLoading: loading }),
+  setOnboarded: (onboarded) => set({ isOnboarded: onboarded }),
+  setUserType: (userType) => set({ userType }),
+  
+  // Authentication method stubs (will be handled by components using Clerk hooks)
+  signInWithEmail: async (email, password, userType = 'dancer') => {
+    console.log('signInWithEmail called - use Clerk hooks in components');
+    // This will be handled by components using useAuthService hook
+  },
+  
+  signUpWithEmail: async (email, password, name, userType = 'dancer') => {
+    console.log('signUpWithEmail called - use Clerk hooks in components');
+    // This will be handled by components using useAuthService hook
+  },
+  
+  signInWithOAuth: async (provider, userType = 'dancer') => {
+    console.log(`signInWithOAuth called for ${provider} - use Clerk hooks in components`);
+    // This will be handled by components using useAuthService hook
+  },
+  
+  signOut: async () => {
+    console.log('signOut called - use Clerk hooks in components');
+    // This will be handled by components using useAuthService hook
+  },
+  
+  reset: () => set({
+    user: null,
+    session: null,
+    isLoading: false,
     isAuthenticated: false,
-    isLoading: false 
+    isOnboarded: false,
+    userType: null,
   }),
 }));
-

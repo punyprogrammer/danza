@@ -12,12 +12,14 @@ export interface DancerProfile {
   userId: string;
   firstName: string;
   lastName: string;
-  preferredName: string;
+  preferredName?: string;
   gender: 'male' | 'female' | 'other';
-  danceStyles: string[];
-  zipCode: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
   proficiencyLevel: 'beginner' | 'amateur' | 'intermediate' | 'expert';
-  role: 'lead' | 'follow' | 'both';
   bio?: string;
   profilePicture?: string;
   additionalPhotos?: string[];
@@ -32,7 +34,6 @@ export interface OrganizerProfile {
   name: string;
   instagramPage?: string;
   facebookPage?: string;
-  danceStyles: string[];
   location: {
     latitude: number;
     longitude: number;

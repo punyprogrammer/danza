@@ -3,13 +3,22 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../styles/colors';
+import { AppHeader } from '../components/ui/AppHeader';
 import { OrganizerDashboard } from '../screens/organizer/OrganizerDashboard';
 import { CreateEventScreen } from '../screens/organizer/CreateEventScreen';
+import { useAuthStore } from '../stores/authStore';
+import { useOnboardingStore } from '../stores/onboardingStore';
 
 type OrganizerTab = 'dashboard' | 'createEvent';
 
 export const OrganizerNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<OrganizerTab>('dashboard');
+  const { resetOnboarding } = useOnboardingStore();
+
+  const handleSignOut = () => {
+    resetOnboarding();
+    useAuthStore.getState().reset();
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -25,6 +34,7 @@ export const OrganizerNavigator: React.FC = () => {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <AppHeader onSignOut={handleSignOut} />
         {/* Main Content */}
         <View style={styles.content}>
           {renderContent()}
@@ -104,7 +114,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(44, 49, 68, 0.85)', // Semi-transparent glass effect
+    backgroundColor: 'rgba(44, 49, 68, 0.95)', // Semi-transparent glass effect
     borderRadius: 16, // Added rounded corners
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -118,7 +128,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
-    backdropFilter: 'blur(20px)', // Additional blur effect
+    // Removed backdropFilter: 'blur(20px)', // Additional blur effect - not supported in React Native
   },
   tab: {
     flex: 1,

@@ -2,22 +2,125 @@ import React, { useState } from 'react';
 import { View, Text, SafeAreaView, StyleSheet, Animated, Image, TouchableOpacity, Platform, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth, useSignIn, useOAuth } from '@clerk/clerk-expo';
+import { Input } from '../../components/ui/Input';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../styles/colors';
+import { userService } from '../../services/userService';
+import * as WebBrowser from 'expo-web-browser';
 
 interface SignInScreenProps {
   onNavigateToSignUp: () => void;
   onSignInSuccess: () => void;
 }
 
+interface EmailSignInFormProps {
+  onSuccess: () => void;
+  onBack: () => void;
+}
+
+const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSuccess, onBack }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, setActive } = useSignIn();
+  const { setUser } = useAuthStore();
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    if (!signIn) {
+      Alert.alert('Error', 'Sign in not available');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await signIn.create({
+        identifier: email,
+        password: password,
+      });
+
+      if (result.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        
+        // Fetch or create user in Firebase
+        try {
+          console.log('🔄 Fetching user from Firebase...');
+          const firebaseUser = await userService.ensureUserExists(result, 'email');
+          const userProfile = userService.convertToUserProfile(firebaseUser);
+          setUser(userProfile);
+          console.log('✅ User data synced from Firebase');
+        } catch (firebaseError) {
+          console.error('❌ Error fetching user from Firebase:', firebaseError);
+          // Don't block the sign-in flow if Firebase fails
+        }
+        
+        onSuccess();
+      } else {
+        Alert.alert('Error', 'Sign in failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      Alert.alert('Error', error.errors?.[0]?.message || 'Sign in failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.emailForm}>
+      <Input
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        style={styles.formInput}
+      />
+      <Input
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.formInput}
+      />
+      <TouchableOpacity
+        style={[styles.signInButton, isLoading && styles.signInButtonDisabled]}
+        onPress={handleSignIn}
+        disabled={isLoading}
+      >
+        <Text style={styles.signInButtonText}>
+          {isLoading ? 'Signing In...' : 'Sign In'}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <Text style={styles.backButtonText}>← Back to OAuth options</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export const SignInScreen: React.FC<SignInScreenProps> = ({
   onNavigateToSignUp,
   onSignInSuccess,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const { setLoading } = useAuthStore();
+  const { signIn, setActive } = useSignIn();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  
+  // OAuth hooks for different providers
+  const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
+  const { startOAuthFlow: startAppleOAuth } = useOAuth({ strategy: 'oauth_apple' });
+  const { startOAuthFlow: startFacebookOAuth } = useOAuth({ strategy: 'oauth_facebook' });
 
   React.useEffect(() => {
     Animated.parallel([
@@ -34,48 +137,50 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     ]).start();
   }, []);
 
-  const handleEmailSignUp = async () => {
-    setIsLoading(true);
-    setLoading(true);
-    
-    try {
-      // TODO: Implement email sign up/sign in
-      console.log('Sign Up / Sign In with Email');
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      onNavigateToSignUp();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to proceed. Please try again.');
-    } finally {
-      setIsLoading(false);
-      setLoading(false);
-    }
+  const handleEmailSignIn = () => {
+    setShowEmailForm(true);
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('🚀 Starting Google sign in with Clerk...');
     setIsLoading(true);
     setLoading(true);
     
     try {
-      // TODO: Implement Google sign in
-      console.log('Sign in with Google');
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock user data for testing
-      const mockUser = {
-        id: '1',
-        email: 'user@example.com',
-        userType: 'dancer' as const,
-        isOnboarded: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      
-      // Set user in auth store
-      useAuthStore.getState().setUser(mockUser);
-      onSignInSuccess();
+      if (!startGoogleOAuth) {
+        throw new Error('Google OAuth not available');
+      }
+
+      // Start the OAuth flow using the useOAuth hook
+      const result = await startGoogleOAuth({
+        redirectUrl: 'danza://auth0',
+      });
+
+             if (result.createdSessionId) {
+               // Set active session
+               if (setActive) {
+                 await setActive({ session: result.createdSessionId });
+               }
+               
+               // Fetch or create user in Firebase
+               try {
+                 console.log('🔄 Fetching user from Firebase for Google sign-in...');
+                 const firebaseUser = await userService.ensureUserExists(result, 'google');
+                 const userProfile = userService.convertToUserProfile(firebaseUser);
+                 useAuthStore.getState().setUser(userProfile);
+                 console.log('✅ User data synced from Firebase for Google sign-in');
+               } catch (firebaseError) {
+                 console.error('❌ Error fetching user from Firebase for Google:', firebaseError);
+                 // Don't block the sign-in flow if Firebase fails
+               }
+               
+               console.log('✅ Clerk Google sign in successful');
+               onSignInSuccess();
+             } else {
+               throw new Error('Google sign in incomplete');
+             }
     } catch (error) {
+      console.error('❌ Google sign in error:', error);
       Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
     } finally {
       setIsLoading(false);
@@ -84,29 +189,45 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   };
 
   const handleAppleSignIn = async () => {
+    console.log('🚀 Starting Apple sign in with Clerk...');
     setIsLoading(true);
     setLoading(true);
     
     try {
-      // TODO: Implement Apple sign in
-      console.log('Sign in with Apple');
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock user data for testing
-      const mockUser = {
-        id: '1',
-        email: 'user@example.com',
-        userType: 'dancer' as const,
-        isOnboarded: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      
-      // Set user in auth store
-      useAuthStore.getState().setUser(mockUser);
-      onSignInSuccess();
+      if (!startAppleOAuth) {
+        throw new Error('Apple OAuth not available');
+      }
+
+      // Start the OAuth flow using the useOAuth hook
+      const result = await startAppleOAuth({
+        redirectUrl: 'danza://auth0',
+      });
+
+             if (result.createdSessionId) {
+               // Set active session
+               if (setActive) {
+                 await setActive({ session: result.createdSessionId });
+               }
+               
+               // Fetch or create user in Firebase
+               try {
+                 console.log('🔄 Fetching user from Firebase for Apple sign-in...');
+                 const firebaseUser = await userService.ensureUserExists(result, 'apple');
+                 const userProfile = userService.convertToUserProfile(firebaseUser);
+                 useAuthStore.getState().setUser(userProfile);
+                 console.log('✅ User data synced from Firebase for Apple sign-in');
+               } catch (firebaseError) {
+                 console.error('❌ Error fetching user from Firebase for Apple:', firebaseError);
+                 // Don't block the sign-in flow if Firebase fails
+               }
+               
+               console.log('✅ Clerk Apple sign in successful');
+               onSignInSuccess();
+             } else {
+               throw new Error('Apple sign in incomplete');
+             }
     } catch (error) {
+      console.error('❌ Apple sign in error:', error);
       Alert.alert('Error', 'Failed to sign in with Apple. Please try again.');
     } finally {
       setIsLoading(false);
@@ -115,29 +236,45 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   };
 
   const handleFacebookSignIn = async () => {
+    console.log('🚀 Starting Facebook sign in with Clerk...');
     setIsLoading(true);
     setLoading(true);
     
     try {
-      // TODO: Implement Facebook sign in
-      console.log('Sign in with Facebook');
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock user data for testing
-      const mockUser = {
-        id: '1',
-        email: 'user@example.com',
-        userType: 'dancer' as const,
-        isOnboarded: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      
-      // Set user in auth store
-      useAuthStore.getState().setUser(mockUser);
-      onSignInSuccess();
+      if (!startFacebookOAuth) {
+        throw new Error('Facebook OAuth not available');
+      }
+
+      // Start the OAuth flow using the useOAuth hook
+      const result = await startFacebookOAuth({
+        redirectUrl: 'danza://auth0',
+      });
+
+             if (result.createdSessionId) {
+               // Set active session
+               if (setActive) {
+                 await setActive({ session: result.createdSessionId });
+               }
+               
+               // Fetch or create user in Firebase
+               try {
+                 console.log('🔄 Fetching user from Firebase for Facebook sign-in...');
+                 const firebaseUser = await userService.ensureUserExists(result, 'facebook');
+                 const userProfile = userService.convertToUserProfile(firebaseUser);
+                 useAuthStore.getState().setUser(userProfile);
+                 console.log('✅ User data synced from Firebase for Facebook sign-in');
+               } catch (firebaseError) {
+                 console.error('❌ Error fetching user from Firebase for Facebook:', firebaseError);
+                 // Don't block the sign-in flow if Firebase fails
+               }
+               
+               console.log('✅ Clerk Facebook sign in successful');
+               onSignInSuccess();
+             } else {
+               throw new Error('Facebook sign in incomplete');
+             }
     } catch (error) {
+      console.error('❌ Facebook sign in error:', error);
       Alert.alert('Error', 'Failed to sign in with Facebook. Please try again.');
     } finally {
       setIsLoading(false);
@@ -209,7 +346,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 {/* Email Button */}
                 <TouchableOpacity 
                   style={[styles.providerButton, styles.emailButton]}
-                  onPress={handleEmailSignUp}
+                  onPress={handleEmailSignIn}
                   disabled={isLoading}
                   activeOpacity={0.8}
                 >
@@ -227,6 +364,17 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Clerk Email Sign In Form */}
+            {showEmailForm && (
+              <View style={styles.emailFormContainer}>
+                <Text style={styles.formTitle}>Sign In with Email</Text>
+                <EmailSignInForm 
+                  onSuccess={onSignInSuccess}
+                  onBack={() => setShowEmailForm(false)}
+                />
+              </View>
+            )}
 
             {/* Not Registered Link */}
             <View style={styles.notRegisteredContainer}>
@@ -330,6 +478,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+  },
+  emailFormContainer: {
+    width: '100%',
+    marginTop: 20,
+  },
+  backButton: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: Colors.text.secondary,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  emailForm: {
+    width: '100%',
+  },
+  formInput: {
+    marginBottom: 15,
+  },
+  signInButton: {
+    backgroundColor: Colors.blue.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  signInButtonDisabled: {
+    opacity: 0.6,
+  },
+  signInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   facebookButton: {
     backgroundColor: '#FFFFFF',

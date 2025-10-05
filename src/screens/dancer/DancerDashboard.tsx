@@ -217,12 +217,11 @@ export const DancerDashboard: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>My Events</Text>
@@ -285,7 +284,6 @@ export const DancerDashboard: React.FC = () => {
             )}
           </View>
         </ScrollView>
-      </SafeAreaView>
     </View>
   );
 };
@@ -295,16 +293,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background.primary,
   },
-  safeArea: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 24,
     paddingBottom: 100, // Space for bottom navigation
   },
   header: {

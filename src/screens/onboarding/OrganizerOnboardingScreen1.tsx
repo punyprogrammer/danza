@@ -4,7 +4,10 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as ExpoImagePicker from 'expo-image-picker';
 import { Input } from '../../components/ui/Input';
+import { AppHeader } from '../../components/ui/AppHeader';
+import { LocationPicker } from '../../components/ui/LocationPicker';
 import { useOnboardingStore } from '../../stores/onboardingStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../styles/colors';
 
 interface OrganizerOnboardingScreen1Props {
@@ -16,15 +19,19 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
   onContinue,
   onBack,
 }) => {
-  const { organizerData, updateOrganizerData } = useOnboardingStore();
+  const { organizerData, updateOrganizerData, saveOnboardingData, completeOnboarding } = useOnboardingStore();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+
+  const handleSignOut = () => {
+    useAuthStore.getState().reset();
+    useOnboardingStore.getState().resetOnboarding();
+  };
   
   const [name, setName] = useState(organizerData.name || '');
   const [instagramPage, setInstagramPage] = useState(organizerData.instagramPage || '');
   const [facebookPage, setFacebookPage] = useState(organizerData.facebookPage || '');
-  const [danceStyles, setDanceStyles] = useState<string[]>(organizerData.danceStyles || []);
-  const [location, setLocation] = useState(organizerData.location || '');
+  const [location, setLocation] = useState(organizerData.location || null);
   const [profilePicture, setProfilePicture] = useState(organizerData.profilePicture || '');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,10 +52,6 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
     ]).start();
   }, []);
 
-  const danceStyleOptions = [
-    'Hip Hop', 'Ballet', 'Contemporary', 'Jazz', 'Tap', 'Ballroom', 'Salsa', 'Latin', 'Modern', 'Other'
-  ];
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -56,24 +59,16 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
       newErrors.name = 'Organization name is required';
     }
 
-    if (danceStyles.length === 0) {
-      newErrors.danceStyles = 'Please select at least one dance style';
+    if (!profilePicture.trim()) {
+      newErrors.profilePicture = 'Profile picture is required';
     }
 
-    if (!location || (typeof location === 'string' && !location.trim())) {
-      newErrors.location = 'Please enter your location';
+    if (!location) {
+      newErrors.location = 'Location is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const toggleDanceStyle = (style: string) => {
-    setDanceStyles(prev => 
-      prev.includes(style) 
-        ? prev.filter(s => s !== style)
-        : [...prev, style]
-    );
   };
 
   const requestPermissions = async () => {
@@ -202,31 +197,47 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
     );
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (validateForm()) {
-      // Add exit animation before continuing
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: -50,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        updateOrganizerData({
+      try {
+        // Prepare data to save
+        const formData = {
           name: name.trim(),
-          instagramPage: instagramPage.trim(),
-          facebookPage: facebookPage.trim(),
-          danceStyles,
-          location: typeof location === 'string' ? location.trim() : location,
+          instagramPage: instagramPage.trim() || undefined,
+          facebookPage: facebookPage.trim() || undefined,
+          location: location || undefined,
           profilePicture,
-        } as any);
+        };
+
+        // Update local store
+        updateOrganizerData(formData);
+
+        // Save to Firebase
+        await saveOnboardingData(formData, 1);
+
+        // Mark onboarding as complete
+        await completeOnboarding();
+
+        // Add exit animation before continuing
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: -50,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          onContinue();
+        });
+      } catch (error) {
+        console.error('❌ Error saving onboarding data:', error);
+        // Still continue to next screen even if Firebase save fails
         onContinue();
-      });
+      }
     }
   };
 
@@ -234,6 +245,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
+        <AppHeader onSignOut={handleSignOut} />
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
@@ -271,7 +283,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
               <View style={styles.formContainer}>
                 {/* Profile Picture Section */}
                 <View style={styles.profilePictureSection}>
-                  <Text style={styles.label}>Profile Picture</Text>
+                  <Text style={styles.label}>Profile Picture *</Text>
                   <View style={styles.profilePictureContainer}>
                     <View style={styles.profilePictureWrapper}>
                       {profilePicture ? (
@@ -323,11 +335,14 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
                       )}
                     </View>
                   </View>
+                  {errors.profilePicture && (
+                    <Text style={styles.errorText}>{errors.profilePicture}</Text>
+                  )}
                 </View>
 
                 <Input
-                  label="Name"
-                  placeholder="Name"
+                  label="Organization Name *"
+                  placeholder="Organization Name"
                   value={name}
                   onChangeText={setName}
                   error={errors.name}
@@ -352,51 +367,13 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
                   style={styles.input}
                 />
                 
-                {/* Dance Styles Offered */}
-                <View style={styles.danceStylesContainer}>
-                  <Text style={styles.label}>Dance Styles Offered</Text>
-                  <View style={styles.danceStylesGrid}>
-                    {danceStyleOptions.map((style) => (
-                      <TouchableOpacity
-                        key={style}
-                        style={[
-                          styles.danceStyleTag,
-                          danceStyles.includes(style) && styles.selectedDanceStyleTag
-                        ]}
-                        onPress={() => toggleDanceStyle(style)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[
-                          styles.danceStyleTagText,
-                          danceStyles.includes(style) && styles.selectedDanceStyleTagText
-                        ]}>
-                          {style}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                  {errors.danceStyles && (
-                    <Text style={styles.errorText}>{errors.danceStyles}</Text>
-                  )}
-                </View>
-                
-                <Input
-                  label="Location"
-                  placeholder="Location"
-                  value={typeof location === 'string' ? location : ''}
-                  onChangeText={setLocation}
+                <LocationPicker
+                  label="Location *"
+                  value={location}
+                  onLocationSelect={setLocation}
                   error={errors.location}
                   style={styles.input}
                 />
-                
-                {/* Map Placeholder */}
-                <View style={styles.mapContainer}>
-                  <View style={styles.mapPlaceholder}>
-                    <Ionicons name="map-outline" size={48} color={Colors.text.secondary} />
-                    <Text style={styles.mapPlaceholderText}>Map View</Text>
-                    <Text style={styles.mapPlaceholderSubtext}>Interactive map will be displayed here</Text>
-                  </View>
-                </View>
               </View>
 
               {/* Next Button */}
@@ -526,58 +503,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text.primary,
     marginBottom: 12,
-  },
-  danceStylesContainer: {
-    marginBottom: 16,
-  },
-  danceStylesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  danceStyleTag: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: Colors.glass.border,
-    marginBottom: 8,
-  },
-  selectedDanceStyleTag: {
-    backgroundColor: Colors.blue.primary,
-    borderColor: Colors.blue.primary,
-  },
-  danceStyleTagText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text.secondary,
-  },
-  selectedDanceStyleTagText: {
-    color: Colors.text.primary,
-  },
-  mapContainer: {
-    marginBottom: 16,
-  },
-  mapPlaceholder: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: 12,
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.glass.border,
-  },
-  mapPlaceholderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text.secondary,
-    marginTop: 8,
-  },
-  mapPlaceholderSubtext: {
-    fontSize: 12,
-    color: Colors.text.tertiary,
-    marginTop: 4,
   },
   buttonContainer: {
     paddingBottom: 24,

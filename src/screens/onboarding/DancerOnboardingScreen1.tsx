@@ -6,7 +6,9 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { LocationPicker } from '../../components/ui/LocationPicker';
+import { AppHeader } from '../../components/ui/AppHeader';
 import { useOnboardingStore } from '../../stores/onboardingStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Colors } from '../../styles/colors';
 
 interface DancerOnboardingScreen1Props {
@@ -18,9 +20,14 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
   onContinue,
   onBack,
 }) => {
-  const { dancerData, updateDancerData } = useOnboardingStore();
+  const { dancerData, updateDancerData, saveOnboardingData } = useOnboardingStore();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+
+  const handleSignOut = () => {
+    useAuthStore.getState().reset();
+    useOnboardingStore.getState().resetOnboarding();
+  };
 
   React.useEffect(() => {
     Animated.parallel([
@@ -41,10 +48,8 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
   const [lastName, setLastName] = useState(dancerData.lastName || '');
   const [preferredName, setPreferredName] = useState(dancerData.preferredName || '');
   const [gender, setGender] = useState(dancerData.gender || '');
-  const [danceStyles, setDanceStyles] = useState<string[]>((dancerData as any).danceStyles || []);
-  const [zipCode, setZipCode] = useState((dancerData as any).zipCode || '');
+  const [location, setLocation] = useState(dancerData.location || null);
   const [proficiencyLevel, setProficiencyLevel] = useState(dancerData.proficiencyLevel || '');
-  const [role, setRole] = useState((dancerData as any).role || '');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -54,10 +59,6 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
     { label: 'Other', value: 'other' },
   ];
 
-  const danceStyleOptions = [
-    'Salsa', 'Bachata', 'Tango', 'Waltz', 'Cha-Cha', 'Rumba', 'Swing', 'Hip-Hop', 'Contemporary', 'Ballet'
-  ];
-
   const proficiencyOptions = [
     { label: 'Beginner', value: 'beginner' },
     { label: 'Amateur', value: 'amateur' },
@@ -65,15 +66,11 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
     { label: 'Expert', value: 'expert' },
   ];
 
-  const roleOptions = [
-    { label: 'Lead', value: 'lead' },
-    { label: 'Follow', value: 'follow' },
-    { label: 'Both', value: 'both' },
-  ];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // Mandatory fields validation
     if (!firstName.trim()) {
       newErrors.firstName = 'First name is required';
     }
@@ -82,65 +79,65 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
       newErrors.lastName = 'Last name is required';
     }
 
-    if (!preferredName.trim()) {
-      newErrors.preferredName = 'Preferred name is required';
-    }
-
     if (!gender) {
       newErrors.gender = 'Please select your gender';
     }
 
-    if (!zipCode.trim()) {
-      newErrors.zipCode = 'Zip code is required';
+    if (!location || !location.latitude || !location.longitude) {
+      newErrors.location = 'Please select your location';
     }
 
     if (!proficiencyLevel) {
       newErrors.proficiencyLevel = 'Please select your proficiency level';
     }
 
-    if (!role) {
-      newErrors.role = 'Please select your role';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const toggleDanceStyle = (style: string) => {
-    setDanceStyles(prev => 
-      prev.includes(style) 
-        ? prev.filter(s => s !== style)
-        : [...prev, style]
-    );
-  };
-
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (validateForm()) {
-      // Add exit animation before continuing
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: -50,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        updateDancerData({
+      try {
+        // Prepare data to save (filter out empty strings and undefined values)
+        const formData: any = {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          preferredName: preferredName.trim(),
           gender: gender as 'male' | 'female' | 'other',
-          danceStyles,
-          zipCode: zipCode.trim(),
+          location: location || undefined,
           proficiencyLevel: proficiencyLevel as 'beginner' | 'amateur' | 'intermediate' | 'expert',
-          role: role as 'lead' | 'follow' | 'both',
-        } as any);
+        };
+
+        // Only add preferredName if it's not empty
+        if (preferredName.trim()) {
+          formData.preferredName = preferredName.trim();
+        }
+
+        // Update local store
+        updateDancerData(formData);
+
+        // Save to Firebase
+        await saveOnboardingData(formData, 1);
+
+        // Add exit animation before continuing
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: -50,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          onContinue();
+        });
+      } catch (error) {
+        console.error('❌ Error saving onboarding data:', error);
+        // Still continue to next screen even if Firebase save fails
         onContinue();
-      });
+      }
     }
   };
 
@@ -148,6 +145,7 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
     <View style={styles.container}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea}>
+        <AppHeader onSignOut={handleSignOut} />
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}
@@ -184,7 +182,7 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
               {/* Form Fields */}
               <View style={styles.formContainer}>
                 <Input
-                  label="First Name"
+                  label="First Name *"
                   placeholder="Enter your first name"
                   value={firstName}
                   onChangeText={setFirstName}
@@ -193,7 +191,7 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
                 />
                 
                 <Input
-                  label="Last Name"
+                  label="Last Name *"
                   placeholder="Enter your last name"
                   value={lastName}
                   onChangeText={setLastName}
@@ -203,7 +201,7 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
                 
                 <Input
                   label="Preferred Name"
-                  placeholder="What should we call you?"
+                  placeholder="What should we call you? (Optional)"
                   value={preferredName}
                   onChangeText={setPreferredName}
                   error={errors.preferredName}
@@ -211,7 +209,7 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
                 />
                 
                 <Select
-                  label="Gender"
+                  label="Gender *"
                   placeholder="Select your gender"
                   value={gender}
                   onSelect={setGender}
@@ -220,43 +218,16 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
                   style={styles.select}
                 />
                 
-                {/* Dance Style Tags */}
-                <View style={styles.danceStylesContainer}>
-                  <Text style={styles.label}>Dance Styles</Text>
-                  <View style={styles.tagsContainer}>
-                    {danceStyleOptions.slice(0, 6).map((style) => (
-                      <TouchableOpacity
-                        key={style}
-                        style={[
-                          styles.tag,
-                          danceStyles.includes(style) && styles.selectedTag
-                        ]}
-                        onPress={() => toggleDanceStyle(style)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[
-                          styles.tagText,
-                          danceStyles.includes(style) && styles.selectedTagText
-                        ]}>
-                          {style}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-                
-                <Input
-                  label="Zip Code"
-                  placeholder="Enter your zip code"
-                  value={zipCode}
-                  onChangeText={setZipCode}
-                  error={errors.zipCode}
-                  keyboardType="numeric"
+                <LocationPicker
+                  label="Location *"
+                  value={location}
+                  onLocationSelect={setLocation}
+                  error={errors.location}
                   style={styles.input}
                 />
                 
                 <Select
-                  label="Proficiency Level"
+                  label="Proficiency Level *"
                   placeholder="Select your dance level"
                   value={proficiencyLevel}
                   onSelect={setProficiencyLevel}
@@ -264,31 +235,6 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
                   error={errors.proficiencyLevel}
                   style={styles.select}
                 />
-                
-                {/* Role Selection */}
-                <View style={styles.roleContainer}>
-                  <Text style={styles.label}>Role</Text>
-                  <View style={styles.roleButtonsContainer}>
-                    {roleOptions.map((roleOption) => (
-                      <TouchableOpacity
-                        key={roleOption.value}
-                        style={[
-                          styles.roleButton,
-                          role === roleOption.value && styles.selectedRoleButton
-                        ]}
-                        onPress={() => setRole(roleOption.value)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[
-                          styles.roleButtonText,
-                          role === roleOption.value && styles.selectedRoleButtonText
-                        ]}>
-                          {roleOption.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
               </View>
 
               {/* Next Button */}
@@ -365,63 +311,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text.primary,
     marginBottom: 12,
-  },
-  danceStylesContainer: {
-    marginBottom: 16,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tag: {
-    backgroundColor: Colors.background.secondary,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: Colors.glass.border,
-  },
-  selectedTag: {
-    backgroundColor: Colors.blue.primary,
-    borderColor: Colors.blue.primary,
-  },
-  tagText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text.secondary,
-  },
-  selectedTagText: {
-    color: Colors.text.primary,
-  },
-  roleContainer: {
-    marginBottom: 16,
-  },
-  roleButtonsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  roleButton: {
-    flex: 1,
-    backgroundColor: Colors.background.secondary,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: Colors.glass.border,
-    alignItems: 'center',
-  },
-  selectedRoleButton: {
-    backgroundColor: Colors.blue.primary,
-    borderColor: Colors.blue.primary,
-  },
-  roleButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text.secondary,
-  },
-  selectedRoleButtonText: {
-    color: Colors.text.primary,
   },
   buttonContainer: {
     paddingBottom: 24,

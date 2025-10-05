@@ -12,6 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "scheme": "danza",
     "ios": {
       "supportsTablet": true
     },

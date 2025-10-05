@@ -5,6 +5,7 @@ import { DancerOnboardingScreen1 } from '../screens/onboarding/DancerOnboardingS
 import { DancerOnboardingScreen2 } from '../screens/onboarding/DancerOnboardingScreen2';
 import { OrganizerOnboardingScreen1 } from '../screens/onboarding/OrganizerOnboardingScreen1';
 import { OnboardingCompleteScreen } from '../screens/onboarding/OnboardingCompleteScreen';
+import { YoureAllSetScreen } from '../components/onboarding/YoureAllSetScreen';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { Colors } from '../styles/colors';
 
@@ -62,7 +63,12 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
   };
 
   const handleDancerContinue = () => {
-    animateTransition('forward', nextStep);
+    // If we're on step 2 (final step for dancers), complete onboarding
+    if (currentStep === 2) {
+      onOnboardingComplete();
+    } else {
+      animateTransition('forward', nextStep);
+    }
   };
 
   const handleDancerBack = () => {
@@ -121,7 +127,17 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
           );
         case 2:
           return (
-            <OnboardingCompleteScreen
+            <YoureAllSetScreen
+              config={{
+                title: "You're All Set!",
+                subtitle: "Welcome to the dance community",
+                description: "Your organizer profile is complete. You can now start creating amazing dance events and building your community.",
+                buttonText: "Get Started",
+                illustrationText: {
+                  main: "🎉",
+                  sub: "Ready to organize!"
+                }
+              }}
               onComplete={onOnboardingComplete}
             />
           );

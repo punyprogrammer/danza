@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, Text, SafeAreaView } from 'react-native';
+import { View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../components/ui/Button';
+import { AppHeader } from '../components/ui/AppHeader';
 import { useAuthStore } from '../stores/authStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { OrganizerNavigator } from '../navigation/OrganizerNavigator';
 import { DancerNavigator } from '../navigation/DancerNavigator';
+import { Colors } from '../styles/colors';
 
 interface MainScreenProps {
   onSignOut: () => void;
@@ -17,7 +20,16 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onSignOut }) => {
   const { user } = useAuthStore();
   const { resetOnboarding } = useOnboardingStore();
   
-  const userType = user?.userType as 'dancer' | 'organizer' | 'instructor' | undefined;
+  const userType = user?.user_type as 'dancer' | 'organizer' | 'instructor';
+  
+  // Debug logging
+  console.log('🎯 MainScreen - User type check:');
+  console.log('User object:', user);
+  console.log('User type:', userType);
+  console.log('User is_onboarded:', user?.is_onboarded);
+  console.log('🎯 MainScreen - Navigation decision:');
+  console.log('Will show organizer nav?', userType === 'organizer');
+  console.log('Will show dancer nav?', userType === 'dancer');
 
   const handleSignOut = () => {
     resetOnboarding();
@@ -59,7 +71,8 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onSignOut }) => {
       style={{ flex: 1 }}
     >
       <StatusBar style="light" />
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <AppHeader onSignOut={handleSignOut} />
         <View className="flex-1 px-6 justify-center">
           {/* Header */}
           <View className="items-center mb-8">
@@ -133,14 +146,6 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onSignOut }) => {
             </View>
           </View>
 
-          {/* Sign Out Button */}
-          <Button
-            title="Sign Out"
-            onPress={handleSignOut}
-            variant="outline"
-            icon="log-out"
-            style={{ borderColor: '#ffffff' }}
-          />
         </View>
       </SafeAreaView>
     </LinearGradient>

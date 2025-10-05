@@ -6,7 +6,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ImagePicker } from '../../components/ui/ImagePicker';
+import { MultiImagePicker } from '../../components/ui/MultiImagePicker';
+import { VideoPicker } from '../../components/ui/VideoPicker';
+import { UploadLoader } from '../../components/ui/UploadLoader';
 import { useOnboardingStore } from '../../stores/onboardingStore';
+import { useAuthStore } from '../../stores/authStore';
+import { storageService } from '../../services/storageService';
 import { GlobalStyles } from '../../styles/globalStyles';
 import { Colors } from '../../styles/colors';
 
@@ -19,7 +24,8 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
   onContinue,
   onBack,
 }) => {
-  const { dancerData, updateDancerData } = useOnboardingStore();
+  const { dancerData, updateDancerData, saveOnboardingData, completeOnboarding } = useOnboardingStore();
+  const { user } = useAuthStore();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
 
@@ -41,8 +47,12 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
   const [bio, setBio] = useState(dancerData.bio || '');
   const [profilePicture, setProfilePicture] = useState(dancerData.profilePicture || '');
   const [additionalPhotos, setAdditionalPhotos] = useState<string[]>(dancerData.additionalPhotos || []);
-  const [additionalVideos, setAdditionalVideos] = useState<string[]>(dancerData.additionalVideos || []);
+  const [additionalVideo, setAdditionalVideo] = useState<string | null>(dancerData.additionalVideos?.[0] || null);
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState('');
 
   const generateBioWithAI = async () => {
     setIsGeneratingBio(true);
@@ -63,28 +73,139 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
     }
   };
 
-  const handleContinue = () => {
-    // Add exit animation before continuing
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: -50,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      updateDancerData({
-        bio: bio.trim(),
-        profilePicture,
-        additionalPhotos,
-        additionalVideos,
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Profile picture is mandatory
+    if (!profilePicture.trim()) {
+      newErrors.profilePicture = 'Profile picture is required';
+    }
+
+    // Bio must be at least 60 characters
+    if (!bio.trim()) {
+      newErrors.bio = 'Bio is required';
+    } else if (bio.trim().length < 60) {
+      newErrors.bio = 'Bio must be at least 60 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const uploadMediaToFirebase = async (): Promise<{ profilePicture: string; additionalPhotos: string[]; additionalVideo?: string }> => {
+    if (!user?.id) {
+      throw new Error('User ID not found');
+    }
+
+    const uploadResults = {
+      profilePicture: profilePicture,
+      additionalPhotos: [] as string[],
+      additionalVideo: undefined as string | undefined,
+    };
+
+    let totalFiles = 1; // profile picture
+    if (additionalPhotos.length > 0) totalFiles += additionalPhotos.length;
+    if (additionalVideo) totalFiles += 1;
+    
+    let uploadedFiles = 0;
+
+    // Upload profile picture
+    if (profilePicture) {
+      setUploadMessage('Uploading profile picture...');
+      const profilePath = storageService.generateUserMediaPath(user.id, 'profile');
+      const profileResult = await storageService.uploadFile({ uri: profilePicture }, profilePath);
+      uploadResults.profilePicture = profileResult.url;
+      uploadedFiles++;
+      setUploadProgress((uploadedFiles / totalFiles) * 100);
+    }
+
+    // Upload additional photos
+    if (additionalPhotos.length > 0) {
+      setUploadMessage('Uploading additional photos...');
+      const photoPromises = additionalPhotos.map(async (photoUri) => {
+        const photoPath = storageService.generateUserMediaPath(user.id, 'photos');
+        const photoResult = await storageService.uploadFile({ uri: photoUri }, photoPath);
+        uploadedFiles++;
+        setUploadProgress((uploadedFiles / totalFiles) * 100);
+        return photoResult.url;
       });
-      onContinue();
-    });
+      uploadResults.additionalPhotos = await Promise.all(photoPromises);
+    }
+
+    // Upload additional video
+    if (additionalVideo) {
+      setUploadMessage('Uploading video...');
+      const videoPath = storageService.generateUserMediaPath(user.id, 'videos');
+      const videoResult = await storageService.uploadFile({ uri: additionalVideo }, videoPath);
+      uploadResults.additionalVideo = videoResult.url;
+      uploadedFiles++;
+      setUploadProgress((uploadedFiles / totalFiles) * 100);
+    }
+
+    return uploadResults;
+  };
+
+  const handleContinue = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadMessage('Preparing upload...');
+
+      // Upload media to Firebase Storage
+      const mediaUrls = await uploadMediaToFirebase();
+
+      // Prepare data to save
+      const formData = {
+        bio: bio.trim(),
+        profilePicture: mediaUrls.profilePicture,
+        additionalPhotos: mediaUrls.additionalPhotos,
+        additionalVideos: mediaUrls.additionalVideo ? [mediaUrls.additionalVideo] : [],
+      };
+
+      setUploadMessage('Saving profile data...');
+      setUploadProgress(95);
+
+      // Update local store
+      updateDancerData(formData);
+
+      // Save to Firebase
+      await saveOnboardingData(formData, 2);
+
+      setUploadProgress(100);
+      setUploadMessage('Complete!');
+
+      // Small delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setIsUploading(false);
+
+      // Mark onboarding as complete
+      await completeOnboarding();
+
+      // Add exit animation before continuing
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -50,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        onContinue();
+      });
+    } catch (error) {
+      console.error('❌ Error saving onboarding data:', error);
+      setIsUploading(false);
+      Alert.alert('Upload Error', 'Failed to upload media. Please try again.');
+    }
   };
 
   return (
@@ -156,16 +277,17 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
               {/* Form Fields */}
               <View style={styles.formContainer}>
                 <ImagePicker
-                  label="Profile Picture"
+                  label="Profile Picture *"
                   value={profilePicture}
                   onImageSelect={setProfilePicture}
                   maxSizeMB={10}
+                  error={errors.profilePicture}
                 />
                 
                 <View style={styles.bioContainer}>
                   <View style={[GlobalStyles.spaceBetween, styles.bioHeader]}>
                     <Text style={[GlobalStyles.label, styles.bioLabel]}>
-                      Bio
+                      Bio * ({bio.length}/60 min characters)
                     </Text>
                     <Button
                       title={isGeneratingBio ? "Generating..." : "Generate with AI"}
@@ -179,51 +301,30 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
                     />
                   </View>
                   <Input
-                    placeholder="Tell us about yourself, your dance journey, and what you're looking for..."
+                    placeholder="Tell us about yourself, your dance journey, and what you're looking for... (minimum 60 characters)"
                     value={bio}
                     onChangeText={setBio}
                     multiline
                     numberOfLines={4}
+                    error={errors.bio}
+                    style={styles.bioInput}
                   />
                 </View>
                 
-                <View style={styles.mediaContainer}>
-                  <Text style={[GlobalStyles.label, styles.mediaLabel]}>
-                    Additional Photos (Optional)
-                  </Text>
-                  <View style={[GlobalStyles.glassInput, styles.mediaPlaceholder]}>
-                    <View style={styles.mediaPlaceholderContent}>
-                      <View style={styles.mediaIconContainer}>
-                        <Ionicons name="images" size={24} color={Colors.text.placeholder} />
-                      </View>
-                      <Text style={styles.mediaPlaceholderText}>
-                        Add Photos
-                      </Text>
-                      <Text style={styles.mediaPlaceholderSubtext}>
-                        Max 10MB per photo
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                <MultiImagePicker
+                  label="Additional Photos (Optional)"
+                  value={additionalPhotos}
+                  onImagesSelect={setAdditionalPhotos}
+                  maxImages={2}
+                  maxSizeMB={10}
+                />
                 
-                <View style={styles.mediaContainer}>
-                  <Text style={[GlobalStyles.label, styles.mediaLabel]}>
-                    Additional Videos (Optional)
-                  </Text>
-                  <View style={[GlobalStyles.glassInput, styles.mediaPlaceholder]}>
-                    <View style={styles.mediaPlaceholderContent}>
-                      <View style={styles.mediaIconContainer}>
-                        <Ionicons name="videocam" size={24} color={Colors.text.placeholder} />
-                      </View>
-                      <Text style={styles.mediaPlaceholderText}>
-                        Add Videos
-                      </Text>
-                      <Text style={styles.mediaPlaceholderSubtext}>
-                        Max 10MB per video
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                <VideoPicker
+                  label="Additional Video (Optional)"
+                  value={additionalVideo}
+                  onVideoSelect={setAdditionalVideo}
+                  maxSizeMB={10}
+                />
               </View>
 
               {/* Continue Button */}
@@ -235,26 +336,19 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
                   iconPosition="right"
                   style={styles.continueButton}
                 />
-                
-                <View style={[GlobalStyles.glassCard, styles.infoCard]}>
-                  <View style={[GlobalStyles.row, styles.infoHeader]}>
-                    <Ionicons name="information-circle" size={20} color={Colors.text.primary} />
-                    <Text style={[GlobalStyles.bodyText, styles.infoTitle]}>
-                      Tips for a great profile:
-                    </Text>
-                  </View>
-                  <Text style={[GlobalStyles.bodyText, styles.infoText]}>
-                    • A clear profile picture helps others recognize you{'\n'}
-                    • Share your dance journey and what you're passionate about{'\n'}
-                    • Mention your favorite dance styles and what you're looking for{'\n'}
-                    • Additional photos and videos showcase your personality
-                  </Text>
-                </View>
               </View>
             </ScrollView>
           </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      
+      {/* Upload Loader */}
+      <UploadLoader
+        visible={isUploading}
+        progress={uploadProgress}
+        message={uploadMessage}
+        subMessage="Please don't close the app during upload"
+      />
     </LinearGradient>
   );
 };
@@ -319,63 +413,16 @@ const styles = StyleSheet.create({
   bioLabel: {
     flex: 1,
   },
+  bioInput: {
+    minHeight: 100,
+  },
   aiButton: {
     borderColor: Colors.glass.border,
-  },
-  mediaContainer: {
-    marginBottom: 20,
-  },
-  mediaLabel: {
-    marginBottom: 8,
-  },
-  mediaPlaceholder: {
-    padding: 20,
-  },
-  mediaPlaceholderContent: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  mediaIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.glass.dark,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  mediaPlaceholderText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text.tertiary,
-    marginBottom: 4,
-  },
-  mediaPlaceholderSubtext: {
-    fontSize: 12,
-    color: Colors.text.placeholder,
   },
   buttonContainer: {
     paddingBottom: 24,
   },
   continueButton: {
     marginBottom: 24,
-  },
-  infoCard: {
-    padding: 20,
-    backgroundColor: Colors.glass.light,
-  },
-  infoHeader: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 22,
-    opacity: 0.9,
   },
 });

@@ -25,6 +25,14 @@ export const Colors = {
     accent: '#60A5FA',       // Accent blue
   },
   
+  // Red colors
+  red: {
+    primary: '#EF4444',      // Primary red
+    secondary: '#F87171',    // Secondary red
+    light: '#FCA5A5',        // Light red
+    dark: '#DC2626',         // Dark red
+  },
+  
   // Text colors
   text: {
     primary: '#FFFFFF',      // Primary white text

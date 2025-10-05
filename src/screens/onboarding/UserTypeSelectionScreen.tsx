@@ -5,7 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui/Button';
 import { UserTypeCard } from '../../components/ui/UserTypeCard';
+import { AppHeader } from '../../components/ui/AppHeader';
 import { useOnboardingStore } from '../../stores/onboardingStore';
+import { useAuthStore } from '../../stores/authStore';
 import { GlobalStyles } from '../../styles/globalStyles';
 import { Colors } from '../../styles/colors';
 
@@ -18,6 +20,11 @@ export const UserTypeSelectionScreen: React.FC<UserTypeSelectionScreenProps> = (
 }) => {
   const [selectedType, setSelectedType] = useState<'dancer' | 'instructor' | 'organizer' | null>(null);
   const { setUserType } = useOnboardingStore();
+
+  const handleSignOut = () => {
+    useAuthStore.getState().reset();
+    useOnboardingStore.getState().resetOnboarding();
+  };
 
   const handleContinue = () => {
     if (selectedType) {
@@ -57,6 +64,7 @@ export const UserTypeSelectionScreen: React.FC<UserTypeSelectionScreenProps> = (
     >
       <StatusBar style="light" />
       <SafeAreaView style={GlobalStyles.safeArea}>
+        <AppHeader onSignOut={handleSignOut} />
         <ScrollView 
           style={GlobalStyles.container}
           contentContainerStyle={styles.scrollContent}
