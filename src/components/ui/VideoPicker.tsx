@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Alert, StyleSheet, Dimensions } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface VideoPickerProps {
   label?: string;
@@ -22,6 +22,7 @@ export const VideoPicker: React.FC<VideoPickerProps> = ({
   error,
   style,
 }) => {
+  const { colors } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
 
   const requestPermissions = async () => {
@@ -95,19 +96,23 @@ export const VideoPicker: React.FC<VideoPickerProps> = ({
   return (
     <View style={getContainerStyle()}>
       {label && (
-        <Text style={[GlobalStyles.label, styles.label]}>
+        <Text style={[GlobalStyles.label, styles.label, { color: colors.text.primary }]}>
           {label}
         </Text>
       )}
       
-      <View style={[GlobalStyles.glassInput, styles.videoContainer]}>
+      <View style={[styles.videoContainer, {
+        backgroundColor: colors.glass.backgroundLight,
+        borderColor: colors.glass.borderLight,
+        shadowColor: colors.glass.shadow,
+      }]}>
         {value ? (
           <View style={styles.videoSelected}>
             <View style={styles.videoInfo}>
-              <Ionicons name="videocam" size={24} color={Colors.blue.primary} />
+              <Ionicons name="videocam" size={24} color={colors.accent.primary} />
               <View style={styles.videoDetails}>
-                <Text style={styles.videoName}>Video Selected</Text>
-                <Text style={styles.videoSize}>Ready to upload</Text>
+                <Text style={[styles.videoName, { color: colors.text.primary }]}>Video Selected</Text>
+                <Text style={[styles.videoSize, { color: colors.text.secondary }]}>Ready to upload</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -115,7 +120,7 @@ export const VideoPicker: React.FC<VideoPickerProps> = ({
               onPress={removeVideo}
               activeOpacity={0.7}
             >
-              <Ionicons name="close-circle" size={20} color={Colors.red.primary} />
+              <Ionicons name="close-circle" size={20} color={colors.status.error} />
             </TouchableOpacity>
           </View>
         ) : (
@@ -129,12 +134,12 @@ export const VideoPicker: React.FC<VideoPickerProps> = ({
               <Ionicons 
                 name={isLoading ? "hourglass" : "videocam"} 
                 size={32} 
-                color={Colors.text.secondary} 
+                color={colors.text.secondary} 
               />
-              <Text style={styles.pickButtonText}>
+              <Text style={[styles.pickButtonText, { color: colors.text.primary }]}>
                 {isLoading ? 'Loading...' : 'Select Video'}
               </Text>
-              <Text style={styles.pickButtonSubtext}>
+              <Text style={[styles.pickButtonSubtext, { color: colors.text.secondary }]}>
                 Max {maxSizeMB}MB, 30 seconds
               </Text>
             </View>
@@ -143,7 +148,7 @@ export const VideoPicker: React.FC<VideoPickerProps> = ({
       </View>
       
       {error && (
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorText, { color: colors.status.error }]}>
           {error}
         </Text>
       )}
@@ -163,6 +168,15 @@ const styles = StyleSheet.create({
   },
   videoContainer: {
     padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   videoSelected: {
     flexDirection: 'row',
@@ -181,11 +195,9 @@ const styles = StyleSheet.create({
   videoName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
   },
   videoSize: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 2,
   },
   removeButton: {
@@ -204,16 +216,13 @@ const styles = StyleSheet.create({
   pickButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.text.primary,
     marginTop: 8,
   },
   pickButtonSubtext: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   errorText: {
-    color: Colors.status.error,
     fontSize: 14,
     marginTop: 4,
   },

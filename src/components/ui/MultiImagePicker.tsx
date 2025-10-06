@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Alert, StyleSheet, Image, ScrollView } fr
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface MultiImagePickerProps {
   label?: string;
@@ -24,6 +24,7 @@ export const MultiImagePicker: React.FC<MultiImagePickerProps> = ({
   error,
   style,
 }) => {
+  const { colors } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
 
   const requestPermissions = async () => {
@@ -97,7 +98,7 @@ export const MultiImagePicker: React.FC<MultiImagePickerProps> = ({
   return (
     <View style={getContainerStyle()}>
       {label && (
-        <Text style={[GlobalStyles.label, styles.label]}>
+        <Text style={[GlobalStyles.label, styles.label, { color: colors.text.primary }]}>
           {label} {value.length > 0 && `(${value.length}/${maxImages})`}
         </Text>
       )}

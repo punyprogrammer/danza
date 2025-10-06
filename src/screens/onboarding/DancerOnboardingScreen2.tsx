@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Alert, StyleSheet, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform, Alert, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui/Button';
@@ -12,9 +11,8 @@ import { UploadLoader } from '../../components/ui/UploadLoader';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuthStore } from '../../stores/authStore';
 import { storageService } from '../../services/storageService';
+import { useTheme } from '../../components/ThemeProvider';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
-
 interface DancerOnboardingScreen2Props {
   onContinue: () => void;
   onBack: () => void;
@@ -26,6 +24,7 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
 }) => {
   const { dancerData, updateDancerData, saveOnboardingData, completeOnboarding } = useOnboardingStore();
   const { user } = useAuthStore();
+  const { colors } = useTheme();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
 
@@ -209,27 +208,23 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
   };
 
   return (
-    <LinearGradient
-      colors={Colors.gradients.primary}
-      style={GlobalStyles.container}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
-      <SafeAreaView style={GlobalStyles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={GlobalStyles.container}
+          style={[styles.container, { backgroundColor: colors.background.primary }]}
         >
           {/* Header */}
           <View style={[GlobalStyles.header, styles.header]}>
-            <Button
-              title=""
-              onPress={onBack}
-              variant="outline"
-              icon="arrow-back"
-              size="small"
+            <TouchableOpacity 
               style={styles.backButton}
-            />
-            <Text style={[GlobalStyles.headerTitle, styles.headerTitle]}>
+              onPress={onBack}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={[GlobalStyles.headerTitle, styles.headerTitle, { color: colors.text.primary }]}>
               Complete Your Profile
             </Text>
             <View style={styles.headerSpacer} />
@@ -237,7 +232,8 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
 
           <Animated.View 
             style={[
-              GlobalStyles.container,
+              styles.animatedContainer,
+              { backgroundColor: colors.background.primary },
               {
                 opacity: fadeAnim,
                 transform: [{ translateY: slideAnim }],
@@ -245,22 +241,22 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
             ]}
           >
             <ScrollView 
-              style={GlobalStyles.container}
+              style={[styles.scrollView, { backgroundColor: colors.background.primary }]}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
               {/* Progress Indicator */}
-              <View style={[GlobalStyles.progressContainer, styles.progressContainer]}>
-                <View style={[GlobalStyles.progressStep, styles.progressStep]}>
-                  <Text style={[GlobalStyles.progressStepText, styles.progressStepText]}>1</Text>
+              <View style={styles.progressContainer}>
+                <View style={[styles.progressStep, { backgroundColor: colors.accent.primary }]}>
+                  <Text style={[styles.progressStepText, { color: colors.text.inverse }]}>1</Text>
                 </View>
-                <View style={GlobalStyles.progressLineActive} />
-                <View style={[GlobalStyles.progressStep, styles.progressStep]}>
-                  <Text style={[GlobalStyles.progressStepText, styles.progressStepText]}>2</Text>
+                <View style={styles.progressLineActive} />
+                <View style={[styles.progressStep, { backgroundColor: colors.accent.primary }]}>
+                  <Text style={[styles.progressStepText, { color: colors.text.inverse }]}>2</Text>
                 </View>
-                <View style={GlobalStyles.progressLine} />
-                <View style={[GlobalStyles.progressStepInactive, styles.progressStepInactive]}>
-                  <Text style={[GlobalStyles.progressStepTextInactive, styles.progressStepTextInactive]}>3</Text>
+                <View style={styles.progressLine} />
+                <View style={[styles.progressStepInactive, { backgroundColor: colors.glass.backgroundLight }]}>
+                  <Text style={[styles.progressStepTextInactive, { color: colors.text.secondary }]}>3</Text>
                 </View>
               </View>
 
@@ -286,7 +282,7 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
                 
                 <View style={styles.bioContainer}>
                   <View style={[GlobalStyles.spaceBetween, styles.bioHeader]}>
-                    <Text style={[GlobalStyles.label, styles.bioLabel]}>
+                    <Text style={[GlobalStyles.label, styles.bioLabel, { color: colors.text.primary }]}>
                       Bio * ({bio.length}/60 min characters)
                     </Text>
                     <Button
@@ -297,7 +293,7 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
                       disabled={isGeneratingBio}
                       loading={isGeneratingBio}
                       icon="sparkles"
-                      style={styles.aiButton}
+                      style={[styles.aiButton, { borderColor: colors.glass.borderLight }]}
                     />
                   </View>
                   <Input
@@ -349,19 +345,35 @@ export const DancerOnboardingScreen2: React.FC<DancerOnboardingScreen2Props> = (
         message={uploadMessage}
         subMessage="Please don't close the app during upload"
       />
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  animatedContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   header: {
     paddingVertical: 16,
   },
   backButton: {
     width: 40,
     height: 40,
-    padding: 0,
-    borderColor: Colors.glass.border,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   headerTitle: {
     fontSize: 18,
@@ -375,19 +387,44 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 32,
   },
   progressStep: {
-    backgroundColor: Colors.blue.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
   },
   progressStepInactive: {
-    backgroundColor: Colors.glass.light,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
   },
   progressStepText: {
-    color: Colors.text.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   progressStepTextInactive: {
-    color: Colors.text.secondary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  progressLineActive: {
+    height: 2,
+    width: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  progressLine: {
+    height: 2,
+    width: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   titleContainer: {
     marginBottom: 32,
@@ -417,7 +454,7 @@ const styles = StyleSheet.create({
     minHeight: 100,
   },
   aiButton: {
-    borderColor: Colors.glass.border,
+    // borderColor applied dynamically in JSX
   },
   buttonContainer: {
     paddingBottom: 24,

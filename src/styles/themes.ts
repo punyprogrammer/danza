@@ -128,14 +128,14 @@ export const darkTheme: ColorTheme = {
   },
 
   accent: {
-    primary: '#FFFFFF',        // White accent instead of blue
+    primary: '#4285F4',        // Blue accent (same as in Colors)
     secondary: '#E5E5E5',      // Light gray
     tertiary: '#CCCCCC',       // Medium gray
   },
 
   glass: {
     background: 'rgba(0, 0, 0, 0.85)',
-    backgroundLight: 'rgba(0, 0, 0, 0.75)',
+    backgroundLight: 'rgba(255, 255, 255, 0.08)', // Lighter glass effect for input fields
     backgroundHeavy: 'rgba(0, 0, 0, 0.92)',
     border: 'rgba(255, 255, 255, 0.15)',
     borderLight: 'rgba(255, 255, 255, 0.08)',
@@ -144,10 +144,10 @@ export const darkTheme: ColorTheme = {
   },
 
   interactive: {
-    hover: 'rgba(255, 255, 255, 0.1)',
-    pressed: 'rgba(255, 255, 255, 0.2)',
+    hover: 'rgba(66, 133, 244, 0.1)',
+    pressed: 'rgba(66, 133, 244, 0.2)',
     disabled: 'rgba(153, 153, 153, 0.5)',
-    focus: 'rgba(255, 255, 255, 0.3)',
+    focus: 'rgba(66, 133, 244, 0.3)',
   },
 };
 

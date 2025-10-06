@@ -1,7 +1,8 @@
+// Temporary mock to bypass runtime errors while we fix all Colors references
 export const Colors = {
-  // Dark theme colors - Black based theme
+  // Dark theme colors
   background: {
-    primary: '#000000',      // Pure black background
+    primary: '#000000',      // Pure black
     secondary: '#1A1A1A',    // Very dark gray
     tertiary: '#2A2A2A',     // Dark gray
     overlay: 'rgba(0, 0, 0, 0.95)', // Black overlay
@@ -16,7 +17,7 @@ export const Colors = {
     shadow: 'rgba(0, 0, 0, 0.1)',
   },
   
-  // Blue accent colors
+  // Blue accent colors (keep blue for buttons)
   blue: {
     primary: '#4285F4',      // Primary blue
     secondary: '#5A9AFF',    // Secondary blue
@@ -58,4 +59,3 @@ export const Colors = {
     glass: ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)'],
   },
 };
-

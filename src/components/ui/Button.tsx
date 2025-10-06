@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface ButtonProps {
   title: string;
@@ -27,21 +27,39 @@ export const Button: React.FC<ButtonProps> = ({
   iconPosition = 'left',
   style,
 }) => {
+  const { colors } = useTheme();
   const getButtonStyle = () => {
     const baseStyle = [styles.button, GlobalStyles.row, GlobalStyles.centerContent];
     
+    // Apply theme colors based on variant
     switch (variant) {
       case 'primary':
-        baseStyle.push(GlobalStyles.primaryButton);
+        baseStyle.push({
+          backgroundColor: colors.accent.primary,
+          borderColor: colors.accent.primary,
+          shadowColor: colors.accent.primary,
+        });
         break;
       case 'secondary':
-        baseStyle.push(GlobalStyles.secondaryButton);
+        baseStyle.push({
+          backgroundColor: colors.glass.backgroundLight,
+          borderColor: colors.glass.borderLight,
+          shadowColor: colors.glass.shadow,
+        });
         break;
       case 'outline':
-        baseStyle.push(GlobalStyles.outlineButton);
+        baseStyle.push({
+          backgroundColor: 'transparent',
+          borderColor: colors.accent.primary,
+          shadowColor: colors.glass.shadow,
+        });
         break;
       case 'social':
-        baseStyle.push(GlobalStyles.socialButton);
+        baseStyle.push({
+          backgroundColor: colors.glass.backgroundLight,
+          borderColor: colors.glass.borderLight,
+          shadowColor: colors.glass.shadow,
+        });
         break;
     }
     
@@ -56,7 +74,12 @@ export const Button: React.FC<ButtonProps> = ({
     }
     
     if (disabled) {
-      baseStyle.push(styles.buttonDisabled);
+      baseStyle.push({
+        ...styles.buttonDisabled,
+        backgroundColor: 'rgba(66, 133, 244, 0.4)', // Lighter blue for disabled
+        borderColor: 'rgba(66, 133, 244, 0.4)', // Lighter blue border
+        opacity: 1, // Don't reduce opacity since we're using lighter color
+      });
     }
     
     if (style) {
@@ -69,18 +92,39 @@ export const Button: React.FC<ButtonProps> = ({
   const getTextStyle = () => {
     const baseStyle = [styles.buttonText];
     
+    // Apply theme colors based on variant
     switch (variant) {
       case 'primary':
-        baseStyle.push(GlobalStyles.primaryButtonText);
+        baseStyle.push({
+          color: '#FFFFFF', // Explicit white color for primary button
+          fontSize: 16,
+          fontWeight: '600',
+          textAlign: 'center',
+        });
         break;
       case 'secondary':
-        baseStyle.push(GlobalStyles.secondaryButtonText);
+        baseStyle.push({
+          color: colors.text.primary,
+          fontSize: 16,
+          fontWeight: '600',
+          textAlign: 'center',
+        });
         break;
       case 'outline':
-        baseStyle.push(GlobalStyles.secondaryButtonText);
+        baseStyle.push({
+          color: colors.accent.primary,
+          fontSize: 16,
+          fontWeight: '600',
+          textAlign: 'center',
+        });
         break;
       case 'social':
-        baseStyle.push(GlobalStyles.buttonText);
+        baseStyle.push({
+          color: colors.text.primary,
+          fontSize: 16,
+          fontWeight: '600',
+          textAlign: 'center',
+        });
         break;
     }
     
@@ -93,18 +137,31 @@ export const Button: React.FC<ButtonProps> = ({
         break;
     }
     
+    if (disabled) {
+      baseStyle.push({
+        color: '#FFFFFF', // Explicit white color for disabled text
+        opacity: 0.8, // Slightly reduce opacity for disabled text
+      });
+    }
+    
     return baseStyle;
   };
 
   const getIconColor = () => {
+    if (disabled) {
+      return '#FFFFFF'; // Explicit white icon for disabled state
+    }
+    
     switch (variant) {
+      case 'primary':
+        return '#FFFFFF'; // Explicit white icon for primary button
       case 'outline':
       case 'secondary':
-        return Colors.blue.primary;
+        return colors.accent.primary;
       case 'social':
-        return Colors.text.primary;
+        return colors.text.primary;
       default:
-        return Colors.text.primary;
+        return colors.text.primary;
     }
   };
 
@@ -150,9 +207,20 @@ export const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     marginVertical: 4,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   buttonSmall: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
   },
   buttonLarge: {
@@ -165,6 +233,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
   buttonTextSmall: {
     fontSize: 14,

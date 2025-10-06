@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface InputProps {
   label?: string;
@@ -43,14 +43,19 @@ export const Input: React.FC<InputProps> = ({
   onRightIconPress,
   style,
 }) => {
+  const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
   const getInputContainerStyle = () => {
     return [
-      GlobalStyles.glassInput, 
+      styles.inputContainer,
+      {
+        backgroundColor: colors.glass.backgroundLight,
+        borderColor: error ? colors.status.error : isFocused ? colors.accent.primary : colors.glass.borderLight,
+        shadowColor: colors.glass.shadow,
+      },
       GlobalStyles.row,
       error && styles.inputError,
-      !error && isFocused && styles.inputFocused,
       !editable && styles.inputDisabled,
       multiline && styles.inputMultiline,
       style,
@@ -60,7 +65,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <View style={styles.container}>
       {label && (
-        <Text style={[GlobalStyles.label, styles.label]}>
+        <Text style={[GlobalStyles.label, styles.label, { color: colors.text.primary }]}>
           {label}
         </Text>
       )}
@@ -69,10 +74,11 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           style={[
             styles.textInput,
+            { color: colors.text.primary },
             multiline && styles.textInputMultiline,
           ]}
           placeholder={placeholder}
-          placeholderTextColor={Colors.text.placeholder}
+          placeholderTextColor={colors.text.placeholder}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry}
@@ -98,14 +104,14 @@ export const Input: React.FC<InputProps> = ({
             <Ionicons 
               name={rightIcon} 
               size={20} 
-              color={isFocused ? Colors.blue.primary : Colors.text.placeholder} 
+              color={isFocused ? colors.accent.primary : colors.text.placeholder} 
             />
           </TouchableOpacity>
         )}
       </View>
       
       {error && (
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorText, { color: colors.status.error }]}>
           {error}
         </Text>
       )}
@@ -120,16 +126,27 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 8,
   },
+  inputContainer: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   inputError: {
-    borderColor: Colors.status.error,
     borderWidth: 2,
   },
   inputFocused: {
-    borderColor: Colors.blue.primary,
     borderWidth: 2,
   },
   inputDisabled: {
-    backgroundColor: Colors.glass.dark,
     opacity: 0.6,
   },
   inputMultiline: {
@@ -138,7 +155,6 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 16,
-    color: Colors.text.primary,
   },
   textInputMultiline: {
     textAlignVertical: 'top',
@@ -147,7 +163,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   errorText: {
-    color: Colors.status.error,
     fontSize: 14,
     marginTop: 4,
   },

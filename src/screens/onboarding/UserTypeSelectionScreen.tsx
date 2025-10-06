@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../components/ui/Button';
@@ -8,8 +7,7 @@ import { UserTypeCard } from '../../components/ui/UserTypeCard';
 import { AppHeader } from '../../components/ui/AppHeader';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuthStore } from '../../stores/authStore';
-import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../components/ThemeProvider';
 
 interface UserTypeSelectionScreenProps {
   onContinue: () => void;
@@ -20,6 +18,7 @@ export const UserTypeSelectionScreen: React.FC<UserTypeSelectionScreenProps> = (
 }) => {
   const [selectedType, setSelectedType] = useState<'dancer' | 'instructor' | 'organizer' | null>(null);
   const { setUserType } = useOnboardingStore();
+  const { colors } = useTheme();
 
   const handleSignOut = () => {
     useAuthStore.getState().reset();
@@ -58,25 +57,22 @@ export const UserTypeSelectionScreen: React.FC<UserTypeSelectionScreenProps> = (
   ];
 
   return (
-    <LinearGradient
-      colors={Colors.gradients.primary}
-      style={GlobalStyles.container}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
-      <SafeAreaView style={GlobalStyles.safeArea}>
-        <AppHeader onSignOut={handleSignOut} />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]}>
+        <AppHeader onSignOut={handleSignOut} onProfilePress={() => {}} showThemeToggle={false} />
         <ScrollView 
-          style={GlobalStyles.container}
+          style={[styles.scrollView, { backgroundColor: colors.background.primary }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
 
           {/* Question */}
           <View style={styles.questionContainer}>
-            <Text style={[GlobalStyles.title, styles.questionTitle]}>
+            <Text style={[styles.questionTitle, { color: colors.text.primary }]}>
               Who are you?
             </Text>
-            <Text style={[GlobalStyles.bodyText, styles.questionSubtitle]}>
+            <Text style={[styles.questionSubtitle, { color: colors.text.secondary }]}>
               Select the option that best describes you
             </Text>
           </View>
@@ -102,16 +98,26 @@ export const UserTypeSelectionScreen: React.FC<UserTypeSelectionScreenProps> = (
               title="Continue"
               onPress={handleContinue}
               disabled={!selectedType}
+              variant="primary"
               style={styles.continueButton}
             />
           </View>
         </ScrollView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface SelectOption {
   label: string;
@@ -30,6 +30,7 @@ export const Select: React.FC<SelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const { colors } = useTheme();
 
   const selectedOption = options.find(option => option.value === value);
 
@@ -40,7 +41,15 @@ export const Select: React.FC<SelectProps> = ({
   };
 
   const getSelectStyle = () => {
-    const baseStyle = [GlobalStyles.glassInput, GlobalStyles.row];
+    const baseStyle = [
+      styles.selectContainer,
+      {
+        backgroundColor: colors.glass.backgroundLight,
+        borderColor: error ? colors.status.error : isFocused ? colors.accent.primary : colors.glass.borderLight,
+        shadowColor: colors.glass.shadow,
+      },
+      GlobalStyles.row,
+    ];
     
     if (error) {
       baseStyle.push(styles.selectError);
@@ -58,7 +67,7 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <View style={styles.container}>
       {label && (
-        <Text style={[GlobalStyles.label, styles.label]}>
+        <Text style={[GlobalStyles.label, styles.label, { color: colors.text.primary }]}>
           {label}
         </Text>
       )}
@@ -73,7 +82,7 @@ export const Select: React.FC<SelectProps> = ({
       >
         <Text style={[
           styles.selectText,
-          { color: selectedOption ? Colors.text.primary : Colors.text.placeholder }
+          { color: selectedOption ? colors.text.primary : colors.text.placeholder }
         ]}>
           {selectedOption ? selectedOption.label : placeholder}
         </Text>
@@ -81,12 +90,12 @@ export const Select: React.FC<SelectProps> = ({
         <Ionicons 
           name={isOpen ? 'chevron-up' : 'chevron-down'} 
           size={20} 
-          color={Colors.text.placeholder} 
+          color={colors.text.placeholder} 
         />
       </TouchableOpacity>
 
       {error && (
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorText, { color: colors.status.error }]}>
           {error}
         </Text>
       )}
@@ -108,9 +117,9 @@ export const Select: React.FC<SelectProps> = ({
             setIsFocused(false);
           }}
         >
-          <View style={GlobalStyles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={[GlobalStyles.title, styles.modalTitle]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.glass.backgroundHeavy, borderColor: colors.glass.border }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.glass.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>
                 {label || 'Select an option'}
               </Text>
             </View>
@@ -122,7 +131,8 @@ export const Select: React.FC<SelectProps> = ({
                 <TouchableOpacity
                   style={[
                     styles.optionItem,
-                    selectedOption?.value === item.value && styles.selectedOption
+                    { borderBottomColor: colors.glass.border },
+                    selectedOption?.value === item.value && { backgroundColor: colors.glass.backdrop }
                   ]}
                   onPress={() => handleSelect(item.value)}
                   activeOpacity={0.7}
@@ -130,30 +140,19 @@ export const Select: React.FC<SelectProps> = ({
                   <View style={GlobalStyles.spaceBetween}>
                     <Text style={[
                       styles.optionText,
+                      { color: selectedOption?.value === item.value ? colors.accent.primary : colors.text.primary },
                       selectedOption?.value === item.value && styles.selectedOptionText
                     ]}>
                       {item.label}
                     </Text>
                     {selectedOption?.value === item.value && (
-                      <Ionicons name="checkmark" size={20} color={Colors.blue.primary} />
+                      <Ionicons name="checkmark" size={20} color={colors.accent.primary} />
                     )}
                   </View>
                 </TouchableOpacity>
               )}
               showsVerticalScrollIndicator={false}
             />
-            
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={GlobalStyles.primaryButton}
-                onPress={() => {
-                  setIsOpen(false);
-                  setIsFocused(false);
-                }}
-              >
-                <Text style={GlobalStyles.primaryButtonText}>Done</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -168,12 +167,24 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 8,
   },
+  selectContainer: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   selectError: {
-    borderColor: Colors.status.error,
     borderWidth: 2,
   },
   selectFocused: {
-    borderColor: Colors.blue.primary,
     borderWidth: 2,
   },
   selectText: {
@@ -181,39 +192,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorText: {
-    color: Colors.status.error,
     fontSize: 14,
     marginTop: 4,
   },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowOffset: {
+      width: 0,
+      height: 15,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 25,
+    elevation: 20,
+  },
   modalHeader: {
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.glass.border,
   },
   modalTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
     textAlign: 'left',
-    marginBottom: 0,
   },
   optionItem: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.glass.border,
-  },
-  selectedOption: {
-    backgroundColor: Colors.glass.light,
   },
   optionText: {
     fontSize: 16,
-    color: Colors.text.primary,
+    fontWeight: '500',
   },
   selectedOptionText: {
-    color: Colors.blue.primary,
     fontWeight: '600',
-  },
-  modalFooter: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.glass.border,
   },
 });

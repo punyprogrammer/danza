@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+
+// Colors is now globally available via colors-init.ts
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
 import { AuthNavigator } from './src/navigation/AuthNavigator';
@@ -8,10 +10,9 @@ import { MainScreen } from './src/screens/MainScreen';
 import { useAuthStore } from './src/stores/authStore';
 import { useOnboardingStore } from './src/stores/onboardingStore';
 import { OnboardingNavigator } from './src/navigation/OnboardingNavigator';
-import { Colors } from './src/styles/colors';
 import { clerkPublishableKey } from './src/config/clerk';
 import { userService } from './src/services/userService';
-import { ThemeProvider } from './src/components/ThemeProvider';
+import { ThemeProvider, useTheme } from './src/components/ThemeProvider';
 import { AuthLoadingScreen } from './src/components/AuthLoadingScreen';
 
 // Custom token cache using expo-secure-store
@@ -158,13 +159,21 @@ function AppContent() {
   );
 }
 
+// Loading component that can use theme
+const AppLoadingScreen = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background.primary, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator size="large" color={colors.accent.primary} />
+    </View>
+  );
+};
+
 export default function App() {
   if (!clerkPublishableKey) {
     return (
       <ThemeProvider>
-        <View style={{ flex: 1, backgroundColor: Colors.background.primary, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={Colors.blue.primary} />
-        </View>
+        <AppLoadingScreen />
       </ThemeProvider>
     );
   }

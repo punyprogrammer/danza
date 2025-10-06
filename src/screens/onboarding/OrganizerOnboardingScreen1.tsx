@@ -8,7 +8,7 @@ import { AppHeader } from '../../components/ui/AppHeader';
 import { LocationPicker } from '../../components/ui/LocationPicker';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuthStore } from '../../stores/authStore';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../components/ThemeProvider';
 
 interface OrganizerOnboardingScreen1Props {
   onContinue: () => void;
@@ -20,6 +20,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
   onBack,
 }) => {
   const { organizerData, updateOrganizerData, saveOnboardingData, completeOnboarding } = useOnboardingStore();
+  const { colors } = useTheme();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
 
@@ -242,24 +243,24 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]}>
         <AppHeader onSignOut={handleSignOut} />
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
+          style={[styles.container, { backgroundColor: colors.background.primary }]}
         >
           {/* Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { backgroundColor: colors.background.primary }]}>
             <TouchableOpacity 
               style={styles.backButton}
               onPress={onBack}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>
+            <Text style={[styles.headerTitle, { color: colors.text.primary }]}>
               Event Organizer
             </Text>
             <View style={styles.headerSpacer} />
@@ -268,6 +269,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
           <Animated.View 
             style={[
               styles.content,
+              { backgroundColor: colors.background.primary },
               {
                 opacity: fadeAnim,
                 transform: [{ translateY: slideAnim }],
@@ -275,15 +277,15 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
             ]}
           >
             <ScrollView 
-              style={styles.scrollView}
+              style={[styles.scrollView, { backgroundColor: colors.background.primary }]}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
               {/* Form Fields */}
-              <View style={styles.formContainer}>
+              <View style={[styles.formContainer, { backgroundColor: colors.background.primary }]}>
                 {/* Profile Picture Section */}
-                <View style={styles.profilePictureSection}>
-                  <Text style={styles.label}>Profile Picture *</Text>
+                <View style={[styles.profilePictureSection, { backgroundColor: colors.background.primary }]}>
+                  <Text style={[styles.label, { color: colors.text.primary }]}>Profile Picture *</Text>
                   <View style={styles.profilePictureContainer}>
                     <View style={styles.profilePictureWrapper}>
                       {profilePicture ? (
@@ -293,11 +295,14 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
                           resizeMode="cover"
                         />
                       ) : (
-                        <View style={styles.profilePlaceholder}>
+                        <View style={[styles.profilePlaceholder, { 
+                          backgroundColor: colors.glass.backgroundLight,
+                          borderColor: colors.glass.borderLight,
+                        }]}>
                           <Ionicons 
                             name={isLoadingImage ? 'hourglass' : 'camera'} 
                             size={32} 
-                            color={Colors.text.placeholder} 
+                            color={colors.text.secondary}
                           />
                         </View>
                       )}
@@ -318,7 +323,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
                             onPress={removeImage}
                             activeOpacity={0.7}
                           >
-                            <Text style={styles.deletePhotoText}>Delete photo</Text>
+                            <Text style={[styles.deletePhotoText, { color: colors.status.error }]}>Delete photo</Text>
                           </TouchableOpacity>
                         </>
                       ) : (
@@ -328,7 +333,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
                           disabled={isLoadingImage}
                           activeOpacity={0.7}
                         >
-                          <Text style={styles.addPhotoText}>
+                          <Text style={[styles.addPhotoText, { color: colors.accent.primary }]}>
                             {isLoadingImage ? 'Processing...' : 'Add Photo'}
                           </Text>
                         </TouchableOpacity>
@@ -336,7 +341,7 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
                     </View>
                   </View>
                   {errors.profilePicture && (
-                    <Text style={styles.errorText}>{errors.profilePicture}</Text>
+                    <Text style={[styles.errorText, { color: colors.status.error }]}>{errors.profilePicture}</Text>
                   )}
                 </View>
 
@@ -377,13 +382,16 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
               </View>
 
               {/* Next Button */}
-              <View style={styles.buttonContainer}>
+              <View style={[styles.buttonContainer, { backgroundColor: colors.background.primary }]}>
                 <TouchableOpacity 
-                  style={styles.nextButton}
+                  style={[styles.nextButton, { 
+                    backgroundColor: colors.accent.primary,
+                    shadowColor: colors.accent.primary,
+                  }]}
                   onPress={handleContinue}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.nextButtonText}>
+                  <Text style={[styles.nextButtonText, { color: colors.text.inverse }]}>
                     Next
                   </Text>
                 </TouchableOpacity>
@@ -399,7 +407,6 @@ export const OrganizerOnboardingScreen1: React.FC<OrganizerOnboardingScreen1Prop
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -426,7 +433,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.text.primary,
   },
   headerSpacer: {
     width: 40,
@@ -454,17 +460,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.background.secondary,
   },
   profilePlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.background.secondary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.glass.border,
   },
   profileActions: {
     flex: 1,
@@ -477,7 +480,6 @@ const styles = StyleSheet.create({
   changePhotoText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.blue.primary,
   },
   deletePhotoButton: {
     marginBottom: 8,
@@ -485,7 +487,6 @@ const styles = StyleSheet.create({
   deletePhotoText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.status.error,
   },
   addPhotoButton: {
     paddingVertical: 8,
@@ -493,7 +494,6 @@ const styles = StyleSheet.create({
   addPhotoText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.blue.primary,
   },
   input: {
     marginBottom: 16,
@@ -501,18 +501,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
     marginBottom: 12,
   },
   buttonContainer: {
     paddingBottom: 24,
   },
   nextButton: {
-    backgroundColor: Colors.blue.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: Colors.blue.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -524,11 +521,9 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
   },
   errorText: {
     fontSize: 12,
-    color: Colors.status.error,
     marginTop: 4,
   },
 });

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Input } from './Input';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface LocationPickerProps {
   label?: string;
@@ -25,6 +25,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
   error,
   style,
 }) => {
+  const { colors } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
 
   const requestLocationPermission = async () => {
@@ -97,7 +98,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     const baseStyle = [styles.container];
     
     if (error) {
-      baseStyle.push(styles.containerError);
+      // baseStyle.push(styles.containerError);
     }
     
     if (style) {
@@ -107,15 +108,26 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
     return baseStyle;
   };
 
+  const getInputContainerStyle = () => {
+    return [
+      styles.inputContainer,
+      {
+        backgroundColor: colors.glass.backgroundLight,
+        borderColor: colors.glass.borderLight,
+        shadowColor: colors.glass.shadow,
+      },
+    ];
+  };
+
   return (
     <View style={getContainerStyle()}>
       {label && (
-        <Text style={[GlobalStyles.label, styles.label]}>
+        <Text style={[GlobalStyles.label, styles.label, { color: colors.text.primary }]}>
           {label}
         </Text>
       )}
       
-      <View style={[GlobalStyles.glassInput, styles.inputContainer]}>
+      <View style={getInputContainerStyle()}>
         <Input
           value={value?.address || ''}
           placeholder="Select your location"
@@ -126,7 +138,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.currentLocationButton]}
+            style={[styles.actionButton, styles.currentLocationButton, { backgroundColor: colors.accent.primary }]}
             onPress={getCurrentLocation}
             disabled={isLoading}
             activeOpacity={0.7}
@@ -134,20 +146,23 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             <Ionicons 
               name={isLoading ? 'hourglass' : 'location'} 
               size={16} 
-              color={Colors.blue.primary} 
+              color={colors.text.inverse} 
             />
-            <Text style={styles.actionButtonText}>
-              {isLoading ? 'Getting Location...' : 'Use Current Location'}
+            <Text style={[styles.actionButtonText, { color: colors.text.inverse }]}>
+              {isLoading ? 'Getting Location...' : 'Current Location'}
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.actionButton, styles.mapButton]}
+            style={[styles.actionButton, styles.mapButton, { 
+              backgroundColor: colors.glass.backgroundLight,
+              borderColor: colors.glass.borderLight,
+            }]}
             onPress={openMapPicker}
             activeOpacity={0.7}
           >
-            <Ionicons name="map" size={16} color={Colors.text.tertiary} />
-            <Text style={[styles.actionButtonText, styles.mapButtonText]}>
+            <Ionicons name="map" size={16} color={colors.text.secondary} />
+            <Text style={[styles.actionButtonText, styles.mapButtonText, { color: colors.text.secondary }]}>
               Pick on Map
             </Text>
           </TouchableOpacity>
@@ -174,7 +189,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputContainer: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    borderWidth: 1,
     padding: 16,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   locationInput: {
     borderWidth: 0,
@@ -195,22 +220,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   currentLocationButton: {
-    backgroundColor: Colors.glass.light,
+    
   },
   mapButton: {
-    backgroundColor: Colors.glass.dark,
+   
   },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 8,
-    color: Colors.blue.primary,
+    
   },
   mapButtonText: {
-    color: Colors.text.tertiary,
+    // color: colors.text.tertiary,
   },
   errorText: {
-    color: Colors.status.error,
+  
     fontSize: 14,
     marginTop: 4,
   },

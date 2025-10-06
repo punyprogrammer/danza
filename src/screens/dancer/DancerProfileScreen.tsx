@@ -349,22 +349,30 @@ export const DancerProfileScreen: React.FC<DancerProfileScreenProps> = ({ onBack
                       resizeMode="cover"
                     />
                   ) : (
-                    <View style={[styles.profilePlaceholder, { backgroundColor: colors.background.secondary }]}>
+                    <View style={[styles.profilePlaceholder, { 
+                      backgroundColor: colors.glass.backgroundLight,
+                      borderColor: colors.glass.borderLight,
+                      shadowColor: colors.glass.shadow,
+                    }]}>
                       <Ionicons
                         name="camera"
                         size={32}
-                        color={colors.text.placeholder}
+                        color={colors.text.secondary}
                       />
                     </View>
                   )}
                 </View>
                 
                 <TouchableOpacity
-                  style={[styles.changePhotoButton, { backgroundColor: colors.accent.primary }]}
+                  style={[styles.changePhotoButton, { 
+                    backgroundColor: colors.glass.backgroundLight,
+                    borderColor: colors.glass.borderLight,
+                    shadowColor: colors.glass.shadow,
+                  }]}
                   onPress={showImageOptions}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.changePhotoText}>Change Photo</Text>
+                  <Text style={[styles.changePhotoText, { color: colors.text.primary }]}>Change Photo</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -556,14 +564,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   changePhotoButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   changePhotoText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },

@@ -9,7 +9,7 @@ import { LocationPicker } from '../../components/ui/LocationPicker';
 import { AppHeader } from '../../components/ui/AppHeader';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuthStore } from '../../stores/authStore';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../components/ThemeProvider';
 
 interface DancerOnboardingScreen1Props {
   onContinue: () => void;
@@ -23,6 +23,7 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
   const { dancerData, updateDancerData, saveOnboardingData } = useOnboardingStore();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  const { colors } = useTheme();
 
   const handleSignOut = () => {
     useAuthStore.getState().reset();
@@ -142,13 +143,13 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background.primary }]}>
         <AppHeader onSignOut={handleSignOut} />
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
+          style={[styles.container, { backgroundColor: colors.background.primary }]}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -157,9 +158,9 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
               onPress={onBack}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>
+            <Text style={[styles.headerTitle, { color: colors.text.primary }]}>
               Personal Details
             </Text>
             <View style={styles.headerSpacer} />
@@ -240,11 +241,14 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
               {/* Next Button */}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity 
-                  style={styles.nextButton}
+                  style={[styles.nextButton, { 
+                    backgroundColor: colors.accent.primary,
+                    shadowColor: colors.accent.primary,
+                  }]}
                   onPress={handleContinue}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.nextButtonText}>
+                  <Text style={[styles.nextButtonText, { color: colors.text.inverse }]}>
                     Next
                   </Text>
                 </TouchableOpacity>
@@ -260,7 +264,6 @@ export const DancerOnboardingScreen1: React.FC<DancerOnboardingScreen1Props> = (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -287,7 +290,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.text.primary,
   },
   headerSpacer: {
     width: 40,
@@ -309,18 +311,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
     marginBottom: 12,
   },
   buttonContainer: {
     paddingBottom: 24,
   },
   nextButton: {
-    backgroundColor: Colors.blue.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: Colors.blue.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -332,6 +331,5 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.text.primary,
   },
 });

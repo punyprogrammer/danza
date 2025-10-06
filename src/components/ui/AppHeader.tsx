@@ -3,18 +3,17 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
 import { useAuthStore } from '../../stores/authStore';
-import { useThemeStore } from '../../stores/themeStore';
-import { getThemeColors } from '../../styles/themes';
+import { useTheme } from '../ThemeProvider';
 
 interface AppHeaderProps {
   onSignOut?: () => void;
   onProfilePress?: () => void;
+  showThemeToggle?: boolean;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut, onProfilePress }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut, onProfilePress, showThemeToggle = true }) => {
   const { signOut } = useAuth();
-  const { theme, toggleTheme } = useThemeStore();
-  const colors = getThemeColors(theme);
+  const { colors } = useTheme();
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -53,7 +52,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut, onProfilePress 
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.glass.background, borderBottomColor: colors.glass.border }]}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary, borderBottomColor: colors.glass.border }]}>
       <View style={styles.leftSection}>
         {/* App Name */}
         <Text style={[styles.appName, { color: colors.text.primary }]}>Danza</Text>
@@ -62,7 +61,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut, onProfilePress 
       <View style={styles.actionsContainer}>
         {/* Profile Button */}
         <TouchableOpacity 
-          style={[styles.profileButton, { backgroundColor: colors.background.secondary }]} 
+          style={[styles.profileButton, { 
+            backgroundColor: colors.glass.backgroundLight,
+            borderColor: colors.glass.borderLight,
+            shadowColor: colors.glass.shadow,
+          }]} 
           onPress={onProfilePress}
           activeOpacity={0.7}
         >
@@ -70,21 +73,31 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onSignOut, onProfilePress 
         </TouchableOpacity>
 
         {/* Theme Toggle Button */}
-        <TouchableOpacity 
-          style={[styles.themeToggleButton, { backgroundColor: colors.background.secondary }]} 
-          onPress={toggleTheme}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name={theme === 'dark' ? 'sunny-outline' : 'moon-outline'} 
-            size={20} 
-            color={colors.text.primary} 
-          />
-        </TouchableOpacity>
+        {showThemeToggle && (
+          <TouchableOpacity 
+            style={[styles.themeToggleButton, { 
+              backgroundColor: colors.glass.backgroundLight,
+              borderColor: colors.glass.borderLight,
+              shadowColor: colors.glass.shadow,
+            }]} 
+            onPress={() => {}} // TODO: Implement theme toggle
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name="sunny-outline"
+              size={20} 
+              color={colors.text.primary} 
+            />
+          </TouchableOpacity>
+        )}
 
         {/* Logout Button */}
         <TouchableOpacity 
-          style={[styles.logoutButton, { backgroundColor: colors.background.secondary }]} 
+          style={[styles.logoutButton, { 
+            backgroundColor: colors.glass.backgroundLight,
+            borderColor: colors.glass.borderLight,
+            shadowColor: colors.glass.shadow,
+          }]} 
           onPress={handleSignOut}
           activeOpacity={0.7}
         >
@@ -101,7 +114,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 20,
+    paddingBottom: 15,
     borderBottomWidth: 1,
     shadowColor: '#000000',
     shadowOffset: {
@@ -133,15 +147,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   themeToggleButton: {
     width: 40,
@@ -150,15 +162,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   logoutButton: {
     width: 40,
@@ -167,14 +177,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
 });

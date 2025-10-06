@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface UserTypeCardProps {
   title: string;
@@ -21,39 +20,39 @@ export const UserTypeCard: React.FC<UserTypeCardProps> = ({
   onPress,
   comingSoon = false,
 }) => {
+  const { colors } = useTheme();
+  
   const getCardStyle = () => {
-    if (isSelected) {
-      return [styles.card, styles.selectedCard];
-    }
-    return [styles.card, styles.defaultCard];
+    return [
+      styles.card,
+      {
+        backgroundColor: colors.glass.backgroundLight,
+        borderColor: isSelected ? colors.accent.primary : colors.glass.borderLight,
+        borderWidth: isSelected ? 2 : 1,
+        shadowColor: colors.glass.shadow,
+      },
+    ];
   };
 
   const getIconContainerStyle = () => {
-    if (isSelected) {
-      return [styles.iconContainer, styles.selectedIconContainer];
-    }
-    return [styles.iconContainer, styles.defaultIconContainer];
+    return [
+      styles.iconContainer,
+      {
+        backgroundColor: isSelected ? colors.accent.primary : colors.glass.backdrop,
+      },
+    ];
   };
 
   const getIconColor = () => {
-    if (isSelected) {
-      return Colors.blue.primary;
-    }
-    return Colors.text.tertiary;
+    return isSelected ? colors.text.inverse : colors.text.secondary;
   };
 
   const getTitleColor = () => {
-    if (isSelected) {
-      return Colors.text.primary;
-    }
-    return Colors.text.primary;
+    return colors.text.primary;
   };
 
   const getDescriptionColor = () => {
-    if (isSelected) {
-      return Colors.text.secondary;
-    }
-    return Colors.text.tertiary;
+    return colors.text.secondary;
   };
 
   return (
@@ -96,7 +95,7 @@ export const UserTypeCard: React.FC<UserTypeCardProps> = ({
         
         {isSelected && (
           <View style={styles.checkmarkContainer}>
-            <Ionicons name="checkmark" size={16} color={Colors.text.primary} />
+            <Ionicons name="checkmark" size={16} color={colors.accent.primary} />
           </View>
         )}
       </View>
@@ -109,27 +108,13 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     marginBottom: 16,
-    shadowColor: Colors.glass.shadow,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  defaultCard: {
-    backgroundColor: Colors.glass.light,
-    borderWidth: 1,
-    borderColor: Colors.glass.border,
-  },
-  selectedCard: {
-    backgroundColor: Colors.glass.medium,
-    borderWidth: 2,
-    borderColor: Colors.blue.primary,
-  },
-  comingSoonCard: {
-    opacity: 0.6,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
   },
   content: {
     flexDirection: 'row',
@@ -142,13 +127,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-  },
-  defaultIconContainer: {
-    backgroundColor: Colors.glass.dark,
-  },
-  selectedIconContainer: {
-    backgroundColor: Colors.blue.primary,
-    opacity: 0.2,
   },
   textContainer: {
     flex: 1,
@@ -164,7 +142,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   comingSoonBadge: {
-    backgroundColor: Colors.glass.dark,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -172,7 +150,7 @@ const styles = StyleSheet.create({
   comingSoonText: {
     fontSize: 12,
     fontWeight: '500',
-    color: Colors.text.tertiary,
+    color: '#8B8F9A',
   },
   description: {
     fontSize: 14,

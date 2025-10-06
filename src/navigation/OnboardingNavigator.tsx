@@ -5,9 +5,9 @@ import { DancerOnboardingScreen1 } from '../screens/onboarding/DancerOnboardingS
 import { DancerOnboardingScreen2 } from '../screens/onboarding/DancerOnboardingScreen2';
 import { OrganizerOnboardingScreen1 } from '../screens/onboarding/OrganizerOnboardingScreen1';
 import { OnboardingCompleteScreen } from '../screens/onboarding/OnboardingCompleteScreen';
-import { YoureAllSetScreen } from '../components/onboarding/YoureAllSetScreen';
+import { YoureAllSetScreen, YoureAllSetConfig } from '../components/onboarding/YoureAllSetScreen';
 import { useOnboardingStore } from '../stores/onboardingStore';
-import { Colors } from '../styles/colors';
+import { useTheme } from '../components/ThemeProvider';
 
 interface OnboardingNavigatorProps {
   onOnboardingComplete: () => void;
@@ -17,6 +17,19 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
   onOnboardingComplete,
 }) => {
   const { currentStep, userType, nextStep, prevStep } = useOnboardingStore();
+  const { colors } = useTheme();
+
+  // Default config for dancer onboarding completion
+  const dancerAllSetConfig: YoureAllSetConfig = {
+    title: "You're All Set!",
+    subtitle: "Welcome to Danza",
+    description: "Your dancer profile is complete and ready to go. Start connecting with other dancers, finding events, and growing your dance journey!",
+    buttonText: "Continue to Dashboard",
+    illustrationText: {
+      main: "🎉",
+      sub: "Let's Dance!"
+    }
+  };
   
   // Animation values
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -113,7 +126,8 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
           );
         case 3:
           return (
-            <OnboardingCompleteScreen
+            <YoureAllSetScreen
+              config={dancerAllSetConfig}
               onComplete={onOnboardingComplete}
             />
           );
@@ -156,7 +170,7 @@ export const OnboardingNavigator: React.FC<OnboardingNavigatorProps> = ({
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.background.primary }}>
+    <View style={{ flex: 1, backgroundColor: colors.background.primary }}>
       <Animated.View 
         style={{ 
           flex: 1,

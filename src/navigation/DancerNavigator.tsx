@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../styles/colors';
 import { AppHeader } from '../components/ui/AppHeader';
 import { DancerDashboard } from '../screens/dancer/DancerDashboard';
 import { ExploreScreen } from '../screens/dancer/ExploreScreen';
 import { DancerProfileScreen } from '../screens/dancer/DancerProfileScreen';
 import { useAuthStore } from '../stores/authStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
+import { useTheme } from '../components/ThemeProvider';
 
 type DancerTab = 'explore' | 'dashboard' | 'profile';
 
 export const DancerNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DancerTab>('explore');
   const { resetOnboarding } = useOnboardingStore();
+  const { colors } = useTheme();
 
   const handleSignOut = () => {
     resetOnboarding();
@@ -35,17 +36,21 @@ export const DancerNavigator: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background.primary }]} edges={['top', 'bottom']}>
+      <View style={[styles.safeArea, { backgroundColor: colors.background.primary }]}>
         <AppHeader onSignOut={handleSignOut} onProfilePress={() => setActiveTab('profile')} />
         {/* Main Content */}
-        <View style={styles.content}>
+        <View style={[styles.content, { backgroundColor: colors.background.primary }]}>
           {renderContent()}
         </View>
 
         {/* Glassmorphism Tab Navigation */}
-        <View style={styles.tabContainer}>
-          <View style={styles.tabBar}>
+        <View style={[styles.tabContainer, { backgroundColor: colors.background.primary }]}>
+          <View style={[styles.tabBar, { 
+            backgroundColor: colors.glass.backgroundLight,
+            borderColor: colors.glass.borderLight,
+            shadowColor: colors.glass.shadow,
+          }]}>
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -58,16 +63,17 @@ export const DancerNavigator: React.FC = () => {
                 <Ionicons
                   name="search-outline"
                   size={24}
-                  color={activeTab === 'explore' ? Colors.blue.primary : Colors.text.secondary}
+                  color={activeTab === 'explore' ? colors.accent.primary : colors.text.secondary}
                 />
                 <Text style={[
                   styles.tabLabel,
+                  { color: activeTab === 'explore' ? colors.accent.primary : colors.text.secondary },
                   activeTab === 'explore' && styles.activeTabLabel
                 ]}>
                   Explore
                 </Text>
               </View>
-              {activeTab === 'explore' && <View style={styles.activeIndicator} />}
+              {activeTab === 'explore' && <View style={[styles.activeIndicator, { backgroundColor: colors.accent.primary }]} />}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -82,28 +88,28 @@ export const DancerNavigator: React.FC = () => {
                 <Ionicons
                   name="grid-outline"
                   size={24}
-                  color={activeTab === 'dashboard' ? Colors.blue.primary : Colors.text.secondary}
+                  color={activeTab === 'dashboard' ? colors.accent.primary : colors.text.secondary}
                 />
                 <Text style={[
                   styles.tabLabel,
+                  { color: activeTab === 'dashboard' ? colors.accent.primary : colors.text.secondary },
                   activeTab === 'dashboard' && styles.activeTabLabel
                 ]}>
                   Dashboard
                 </Text>
               </View>
-              {activeTab === 'dashboard' && <View style={styles.activeIndicator} />}
+              {activeTab === 'dashboard' && <View style={[styles.activeIndicator, { backgroundColor: colors.accent.primary }]} />}
             </TouchableOpacity>
           </View>
         </View>
-      </SafeAreaView>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -117,20 +123,17 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(44, 49, 68, 0.95)', // Semi-transparent glass effect
-    borderRadius: 16, // Added rounded corners
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: Colors.glass.border,
-    shadowColor: Colors.glass.shadow,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 8,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 10,
   },
   tab: {
     flex: 1,
@@ -153,10 +156,8 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: Colors.text.secondary,
   },
   activeTabLabel: {
-    color: Colors.blue.primary,
     fontWeight: '600',
   },
   activeIndicator: {
@@ -166,7 +167,6 @@ const styles = StyleSheet.create({
     marginLeft: -8,
     width: 16,
     height: 4,
-    backgroundColor: Colors.blue.primary,
     borderRadius: 2,
   },
 });

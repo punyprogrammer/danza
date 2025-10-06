@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image, Alert, StyleSheet } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import * as ExpoImagePicker from 'expo-image-picker';
 import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../ThemeProvider';
 
 interface ImagePickerProps {
   label?: string;
@@ -22,6 +22,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   error,
   style,
 }) => {
+  const { colors } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
 
   const requestPermissions = async () => {
@@ -167,12 +168,16 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
   return (
     <View style={getContainerStyle()}>
       {label && (
-        <Text style={[GlobalStyles.label, styles.label]}>
+        <Text style={[GlobalStyles.label, styles.label, { color: colors.text.primary }]}>
           {label}
         </Text>
       )}
       
-      <View style={[GlobalStyles.glassInput, styles.imageContainer]}>
+      <View style={[styles.imageContainer, {
+        backgroundColor: colors.glass.backgroundLight,
+        borderColor: colors.glass.borderLight,
+        shadowColor: colors.glass.shadow,
+      }]}>
         {value ? (
           <View style={styles.imagePreviewContainer}>
             <Image
@@ -187,8 +192,8 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
                 disabled={isLoading}
                 activeOpacity={0.7}
               >
-                <Ionicons name="camera" size={16} color={Colors.blue.primary} />
-                <Text style={styles.actionButtonText}>
+                <Ionicons name="camera" size={16} color={colors.accent.primary} />
+                <Text style={[styles.actionButtonText, { color: colors.accent.primary }]}>
                   Change Photo
                 </Text>
               </TouchableOpacity>
@@ -198,7 +203,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
                 onPress={removeImage}
                 activeOpacity={0.7}
               >
-                <Ionicons name="trash" size={16} color={Colors.status.error} />
+                <Ionicons name="trash" size={16} color={colors.status.error} />
               </TouchableOpacity>
             </View>
           </View>
@@ -213,13 +218,13 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
               <Ionicons 
                 name={isLoading ? 'hourglass' : 'camera'} 
                 size={32} 
-                color={Colors.text.placeholder} 
+                color={colors.text.placeholder} 
               />
             </View>
-            <Text style={styles.placeholderText}>
+            <Text style={[styles.placeholderText, { color: colors.text.tertiary }]}>
               {isLoading ? 'Processing...' : 'Add Profile Picture'}
             </Text>
-            <Text style={styles.placeholderSubtext}>
+            <Text style={[styles.placeholderSubtext, { color: colors.text.placeholder }]}>
               Max {maxSizeMB}MB
             </Text>
           </TouchableOpacity>
@@ -227,7 +232,7 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
       </View>
       
       {error && (
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorText, { color: colors.status.error }]}>
           {error}
         </Text>
       )}
@@ -247,6 +252,15 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   imagePreviewContainer: {
     alignItems: 'center',
@@ -271,16 +285,15 @@ const styles = StyleSheet.create({
   },
   changeButton: {
     flex: 1,
-    backgroundColor: Colors.glass.light,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   removeButton: {
-    backgroundColor: Colors.glass.dark,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 8,
-    color: Colors.blue.primary,
   },
   placeholderContainer: {
     alignItems: 'center',
@@ -290,7 +303,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: Colors.glass.dark,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -298,15 +311,12 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.text.tertiary,
     marginBottom: 4,
   },
   placeholderSubtext: {
     fontSize: 12,
-    color: Colors.text.placeholder,
   },
   errorText: {
-    color: Colors.status.error,
     fontSize: 14,
     marginTop: 4,
   },

@@ -11,10 +11,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../styles/colors';
 import { EventCard, Event } from '../../components/events/EventCard';
 import { EventSwipeView } from '../../components/events/EventSwipeView';
 import { PaymentScreen } from '../payment/PaymentScreen';
+import { useTheme } from '../../components/ThemeProvider';
 
 
 // Mock data for events
@@ -88,6 +88,7 @@ export const ExploreScreen: React.FC = () => {
   const [isSwipeView, setIsSwipeView] = useState(false);
   const [isPaymentView, setIsPaymentView] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const { colors } = useTheme();
 
   const filterOptions = [
     { label: 'All', value: 'all' },
@@ -163,7 +164,7 @@ export const ExploreScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
       <ScrollView 
         style={styles.scrollView}
@@ -172,24 +173,28 @@ export const ExploreScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Explore Events</Text>
-          <Text style={styles.subtitle}>Discover dance events near you</Text>
+          <Text style={[styles.title, { color: colors.text.primary }]}>Explore Events</Text>
+          <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Discover dance events near you</Text>
         </View>
 
           {/* Search Bar */}
           <View style={styles.searchContainer}>
-            <View style={styles.searchBar}>
-              <Ionicons name="search-outline" size={20} color={Colors.text.secondary} />
+            <View style={[styles.searchBar, { 
+              backgroundColor: colors.glass.backgroundLight,
+              borderColor: colors.glass.borderLight,
+              shadowColor: colors.glass.shadow,
+            }]}>
+              <Ionicons name="search-outline" size={20} color={colors.text.secondary} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: colors.text.primary }]}
                 placeholder="Search events, venues, or organizers..."
-                placeholderTextColor={Colors.text.placeholder}
+                placeholderTextColor={colors.text.placeholder}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <Ionicons name="close-circle" size={20} color={Colors.text.secondary} />
+                  <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
                 </TouchableOpacity>
               )}
             </View>
@@ -207,14 +212,20 @@ export const ExploreScreen: React.FC = () => {
                   key={filter.value}
                   style={[
                     styles.filterChip,
-                    selectedFilter === filter.value && styles.activeFilterChip
+                    { 
+                      backgroundColor: selectedFilter === filter.value ? colors.accent.primary : colors.glass.backgroundLight,
+                      borderColor: selectedFilter === filter.value ? colors.accent.primary : colors.glass.borderLight,
+                    }
                   ]}
                   onPress={() => setSelectedFilter(filter.value)}
                   activeOpacity={0.7}
                 >
                   <Text style={[
                     styles.filterChipText,
-                    selectedFilter === filter.value && styles.activeFilterChipText
+                    { 
+                      color: selectedFilter === filter.value ? colors.text.inverse : colors.text.primary,
+                      fontWeight: selectedFilter === filter.value ? '600' : '500',
+                    }
                   ]}>
                     {filter.label}
                   </Text>
@@ -225,7 +236,7 @@ export const ExploreScreen: React.FC = () => {
 
           {/* Events List */}
           <View style={styles.eventsContainer}>
-            <Text style={styles.eventsCount}>
+            <Text style={[styles.eventsCount, { color: colors.text.secondary }]}>
               {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
             </Text>
             
@@ -246,7 +257,6 @@ export const ExploreScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
   },
   scrollView: {
     flex: 1,
@@ -263,12 +273,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.text.primary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.text.secondary,
   },
   searchContainer: {
     marginBottom: 20,
@@ -276,18 +284,15 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.secondary,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: Colors.glass.border,
     gap: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: Colors.text.primary,
   },
   filterContainer: {
     marginBottom: 24,
@@ -296,26 +301,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   filterChip: {
-    backgroundColor: Colors.background.secondary,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 12,
     borderWidth: 1,
-    borderColor: Colors.glass.border,
-  },
-  activeFilterChip: {
-    backgroundColor: Colors.blue.primary,
-    borderColor: Colors.blue.primary,
   },
   filterChipText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text.secondary,
-  },
-  activeFilterChipText: {
-    color: Colors.text.primary,
-    fontWeight: '600',
   },
   eventsContainer: {
     flex: 1,
@@ -323,7 +316,6 @@ const styles = StyleSheet.create({
   eventsCount: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.text.secondary,
     marginBottom: 16,
   },
   eventsList: {
