@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, StyleSheet, Animated, Image, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, Animated, Image, TouchableOpacity, Platform, Alert, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, useSignIn, useOAuth } from '@clerk/clerk-expo';
 import { Input } from '../../components/ui/Input';
 import { useAuthStore } from '../../stores/authStore';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../components/ThemeProvider';
 import { userService } from '../../services/userService';
 import { AuthLoadingScreen } from '../../components/AuthLoadingScreen';
 import * as WebBrowser from 'expo-web-browser';
@@ -107,6 +107,8 @@ const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSuccess, onBack }) 
   );
 };
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 export const SignInScreen: React.FC<SignInScreenProps> = ({
   onNavigateToSignUp,
   onSignInSuccess,
@@ -115,6 +117,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   const [showEmailForm, setShowEmailForm] = useState(false);
   const { setLoading } = useAuthStore();
   const { signIn, setActive } = useSignIn();
+  const { colors } = useTheme();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
   
@@ -289,8 +292,19 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
+      
+      {/* Blurred Background Image */}
+      <View style={styles.backgroundContainer}>
+        <Image
+          source={require('../../../assets/sergei-gavrilov-gbd6PqRqGms-unsplash.jpg')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+        <View style={[styles.blurOverlay, { backgroundColor: colors.glass.backdrop }]} />
+      </View>
+
       <SafeAreaView style={styles.safeArea}>
         <Animated.View 
           style={[
@@ -301,35 +315,22 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             }
           ]}
         >
-          {/* Top Section - Dancer Image */}
-          <View style={styles.imageSection}>
-            <Image
-              source={{
-                uri: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
-              }}
-              style={styles.dancerImage}
-              resizeMode="cover"
-            />
-          </View>
-
-          {/* Bottom Section - UI Elements */}
-          <View style={styles.uiSection}>
-            {/* Title */}
-            <Text style={styles.title}>
-              Danza
-            </Text>
-            
-            {/* Subtitle */}
-            <Text style={styles.subtitle}>
-              Connect with dancers, studios, and events.
-            </Text>
+          {/* Combined Glassmorphism Container */}
+          <View style={[styles.combinedCard, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+            {/* Header Text */}
+            <View style={styles.headerSection}>
+              <Text style={[styles.title, { color: colors.text.primary }]}>Welcome to Danza</Text>
+              <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
+                Connect with dancers, studios, and events
+              </Text>
+            </View>
 
             {/* Circular Provider Buttons */}
             <View style={styles.providerButtonsContainer}>
               <View style={styles.providerButtonsRow}>
                 {/* Google Button */}
                 <TouchableOpacity 
-                  style={[styles.providerButton, styles.googleButton]}
+                  style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
                   onPress={handleGoogleSignIn}
                   disabled={isLoading}
                   activeOpacity={0.8}
@@ -340,28 +341,28 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 {/* Apple Button (iOS only) */}
                 {Platform.OS === 'ios' && (
                   <TouchableOpacity 
-                    style={[styles.providerButton, styles.appleButton]}
+                    style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
                     onPress={handleAppleSignIn}
                     disabled={isLoading}
                     activeOpacity={0.8}
                   >
-                    <Ionicons name="logo-apple" size={24} color="#000000" />
+                    <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
                   </TouchableOpacity>
                 )}
 
                 {/* Email Button */}
                 <TouchableOpacity 
-                  style={[styles.providerButton, styles.emailButton]}
+                  style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
                   onPress={handleEmailSignIn}
                   disabled={isLoading}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="mail" size={24} color="#4285F4" />
+                  <Ionicons name="mail" size={24} color={colors.accent.primary} />
                 </TouchableOpacity>
 
                 {/* Facebook Button */}
                 <TouchableOpacity 
-                  style={[styles.providerButton, styles.facebookButton]}
+                  style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
                   onPress={handleFacebookSignIn}
                   disabled={isLoading}
                   activeOpacity={0.8}
@@ -373,8 +374,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
             {/* Clerk Email Sign In Form */}
             {showEmailForm && (
-              <View style={styles.emailFormContainer}>
-                <Text style={styles.formTitle}>Sign In with Email</Text>
+              <View style={[styles.emailFormContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                <Text style={[styles.formTitle, { color: colors.text.primary }]}>Sign In with Email</Text>
                 <EmailSignInForm 
                   onSuccess={onSignInSuccess}
                   onBack={() => setShowEmailForm(false)}
@@ -384,10 +385,10 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
             {/* Not Registered Link */}
             <View style={styles.notRegisteredContainer}>
-              <Text style={styles.notRegisteredText}>
+              <Text style={[styles.notRegisteredText, { color: colors.text.secondary }]}>
                 Not Registered?{' '}
                 <Text 
-                  style={styles.signUpLink}
+                  style={[styles.signUpLink, { color: colors.accent.primary }]}
                   onPress={onNavigateToSignUp}
                 >
                   Sign Up
@@ -396,7 +397,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             </View>
 
             {/* Legal Text */}
-            <Text style={styles.legalText}>
+            <Text style={[styles.legalText, { color: colors.text.tertiary }]}>
               By continuing, you agree to our Terms of Service and Privacy Policy.
             </Text>
           </View>
@@ -409,41 +410,70 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.primary,
+  },
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  blurOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   safeArea: {
     flex: 1,
   },
   content: {
     flex: 1,
-  },
-  imageSection: {
-    flex: 0.6, // 60% of screen height
-  },
-  dancerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  uiSection: {
-    flex: 0.4, // 40% of screen height
-    backgroundColor: Colors.background.primary,
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    paddingHorizontal: 20,
     paddingBottom: 40,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+  },
+  combinedCard: {
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 16,
+  },
+  headerSection: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  greeting: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+    opacity: 0.9,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    letterSpacing: 0.5,
     textAlign: 'center',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.text.secondary,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   providerButtonsContainer: {
     marginBottom: 32,
@@ -453,14 +483,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
   },
   providerButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  emailFormContainer: {
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    marginTop: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -468,40 +514,19 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
-  googleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  appleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  emailButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  emailFormContainer: {
-    width: '100%',
-    marginTop: 20,
+    elevation: 4,
   },
   backButton: {
     marginTop: 15,
     alignItems: 'center',
   },
   backButtonText: {
-    color: Colors.text.secondary,
     fontSize: 14,
     textDecorationLine: 'underline',
   },
   formTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -512,11 +537,18 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   signInButton: {
-    backgroundColor: Colors.blue.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   signInButtonDisabled: {
     opacity: 0.6,
@@ -526,29 +558,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  facebookButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
   notRegisteredContainer: {
     marginBottom: 16,
     alignItems: 'center',
   },
   notRegisteredText: {
     fontSize: 14,
-    color: Colors.text.secondary,
+    fontWeight: '500',
   },
   signUpLink: {
     fontSize: 14,
-    color: Colors.blue.primary,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
   legalText: {
     fontSize: 12,
-    color: Colors.text.tertiary,
     textAlign: 'center',
     lineHeight: 18,
+    opacity: 0.7,
   },
 });

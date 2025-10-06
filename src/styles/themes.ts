@@ -36,8 +36,12 @@ export interface ColorTheme {
   // Glass Effect Colors
   glass: {
     background: string;
+    backgroundLight: string;
+    backgroundHeavy: string;
     border: string;
+    borderLight: string;
     shadow: string;
+    backdrop: string;
   };
   
   // Interactive Colors
@@ -82,8 +86,12 @@ export const lightTheme: ColorTheme = {
   
   glass: {
     background: 'rgba(255, 255, 255, 0.85)',
-    border: 'rgba(203, 213, 225, 0.3)',
-    shadow: '#000000',
+    backgroundLight: 'rgba(255, 255, 255, 0.75)',
+    backgroundHeavy: 'rgba(255, 255, 255, 0.92)',
+    border: 'rgba(203, 213, 225, 0.35)',
+    borderLight: 'rgba(203, 213, 225, 0.25)',
+    shadow: 'rgba(0, 0, 0, 0.15)',
+    backdrop: 'rgba(0, 0, 0, 0.08)',
   },
   
   interactive: {
@@ -96,46 +104,50 @@ export const lightTheme: ColorTheme = {
 
 export const darkTheme: ColorTheme = {
   background: {
-    primary: '#1A1D29',        // Dark blue-gray
-    secondary: '#242938',      // Slightly lighter
-    tertiary: '#2D3142',       // Medium dark
-    card: '#242938',           // Dark cards
-    modal: 'rgba(26, 29, 41, 0.95)', // Semi-transparent dark
+    primary: '#000000',        // Pure black
+    secondary: '#1A1A1A',      // Very dark gray
+    tertiary: '#2A2A2A',       // Dark gray
+    card: '#1A1A1A',           // Dark cards
+    modal: 'rgba(0, 0, 0, 0.95)', // Semi-transparent black
     overlay: 'rgba(0, 0, 0, 0.7)', // Dark overlay
   },
-  
+
   text: {
     primary: '#FFFFFF',        // White
-    secondary: '#B8BCC8',      // Light gray
-    tertiary: '#8B8F9A',       // Medium gray
-    placeholder: '#5A5D68',    // Dark gray
-    inverse: '#1E293B',        // Dark text
+    secondary: '#CCCCCC',      // Light gray
+    tertiary: '#999999',       // Medium gray
+    placeholder: '#666666',    // Dark gray
+    inverse: '#000000',        // Black text
   },
-  
+
   status: {
     success: '#10B981',        // Emerald
     warning: '#F59E0B',        // Amber
     error: '#EF4444',          // Red
-    info: '#3B82F6',           // Blue
+    info: '#6B7280',           // Gray instead of blue
   },
-  
+
   accent: {
-    primary: '#60A5FA',        // Light blue
-    secondary: '#A78BFA',      // Light violet
-    tertiary: '#F472B6',       // Light pink
+    primary: '#FFFFFF',        // White accent instead of blue
+    secondary: '#E5E5E5',      // Light gray
+    tertiary: '#CCCCCC',       // Medium gray
   },
-  
+
   glass: {
-    background: 'rgba(44, 49, 68, 0.95)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    shadow: '#000000',
+    background: 'rgba(0, 0, 0, 0.85)',
+    backgroundLight: 'rgba(0, 0, 0, 0.75)',
+    backgroundHeavy: 'rgba(0, 0, 0, 0.92)',
+    border: 'rgba(255, 255, 255, 0.15)',
+    borderLight: 'rgba(255, 255, 255, 0.08)',
+    shadow: 'rgba(0, 0, 0, 0.5)',
+    backdrop: 'rgba(255, 255, 255, 0.05)',
   },
-  
+
   interactive: {
-    hover: 'rgba(96, 165, 250, 0.1)',
-    pressed: 'rgba(96, 165, 250, 0.2)',
-    disabled: 'rgba(139, 143, 154, 0.5)',
-    focus: 'rgba(96, 165, 250, 0.3)',
+    hover: 'rgba(255, 255, 255, 0.1)',
+    pressed: 'rgba(255, 255, 255, 0.2)',
+    disabled: 'rgba(153, 153, 153, 0.5)',
+    focus: 'rgba(255, 255, 255, 0.3)',
   },
 };
 

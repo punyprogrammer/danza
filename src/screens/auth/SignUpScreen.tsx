@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, KeyboardAvoidingView, Platform, Alert, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, SafeAreaView, KeyboardAvoidingView, Platform, Alert, StyleSheet, Animated, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSignIn, useSignUp, useOAuth, useUser } from '@clerk/clerk-expo';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useAuthStore } from '../../stores/authStore';
-import { GlobalStyles } from '../../styles/globalStyles';
-import { Colors } from '../../styles/colors';
+import { useTheme } from '../../components/ThemeProvider';
 import { userService } from '../../services/userService';
 import { AuthLoadingScreen } from '../../components/AuthLoadingScreen';
 import * as WebBrowser from 'expo-web-browser';
@@ -121,6 +119,8 @@ const EmailSignUpForm: React.FC<EmailSignUpFormProps> = ({ onSuccess, onBack }) 
   );
 };
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   onNavigateToSignIn,
   onSignUpSuccess,
@@ -134,6 +134,7 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   const { signUp, setActive: setSignUpActive } = useSignUp();
   const { signIn, setActive: setSignInActive } = useSignIn();
   const { user: clerkUser } = useUser();
+  const { colors } = useTheme();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
   
@@ -499,150 +500,231 @@ export const SignUpScreen: React.FC<SignUpScreenProps> = ({
   }
 
   return (
-    <LinearGradient
-      colors={['#1E40AF', '#3B82F6', '#60A5FA']}
-      style={GlobalStyles.container}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <StatusBar style="light" />
-      <SafeAreaView style={GlobalStyles.safeArea}>
+      
+      {/* Blurred Background Image */}
+      <View style={styles.backgroundContainer}>
+        <Image
+          source={require('../../../assets/sergei-gavrilov-gbd6PqRqGms-unsplash.jpg')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+        <View style={[styles.blurOverlay, { backgroundColor: colors.glass.backdrop }]} />
+      </View>
+
+      <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={GlobalStyles.container}
+          style={styles.keyboardAvoidingView}
         >
           <Animated.View 
             style={[
-              GlobalStyles.container,
-              styles.container,
+              styles.content,
               {
                 opacity: fadeAnim,
                 transform: [{ translateY: slideAnim }],
               }
             ]}
           >
-            {/* Header */}
-            <View style={[GlobalStyles.centerContent, styles.header]}>
-              <Text style={[GlobalStyles.title, styles.registerTitle]}>
-                Register with
-              </Text>
-            </View>
+            {/* Combined Glassmorphism Container */}
+            <View style={[styles.combinedCard, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+              {/* Header Text */}
+              <View style={styles.headerSection}>
+                <Text style={[styles.title, { color: colors.text.primary }]}>Register with Danza</Text>
+                <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
+                  Join our dance community today
+                </Text>
+              </View>
 
-            {/* Social Sign Up Options */}
-            <View style={styles.socialButtonsContainer}>
-              <View style={styles.providerButtonsRow}>
-                {/* Google Button */}
-                <TouchableOpacity 
-                  style={[styles.providerButton, styles.googleButton]}
-                  onPress={handleGoogleSignUp}
-                  disabled={isLoading}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="logo-google" size={24} color="#DB4437" />
-                </TouchableOpacity>
-
-                {/* Apple Button (iOS only) */}
-                {Platform.OS === 'ios' && (
+              {/* Circular Provider Buttons */}
+              <View style={styles.providerButtonsContainer}>
+                <View style={styles.providerButtonsRow}>
+                  {/* Google Button */}
                   <TouchableOpacity 
-                    style={[styles.providerButton, styles.appleButton]}
-                    onPress={handleAppleSignUp}
+                    style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
+                    onPress={handleGoogleSignUp}
                     disabled={isLoading}
                     activeOpacity={0.8}
                   >
-                    <Ionicons name="logo-apple" size={24} color="#000000" />
+                    <Ionicons name="logo-google" size={24} color="#DB4437" />
                   </TouchableOpacity>
-                )}
 
-                {/* Facebook Button */}
+                  {/* Apple Button (iOS only) */}
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity 
+                      style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
+                      onPress={handleAppleSignUp}
+                      disabled={isLoading}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="logo-apple" size={24} color={colors.text.primary} />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Facebook Button */}
+                  <TouchableOpacity 
+                    style={[styles.providerButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
+                    onPress={handleFacebookSignUp}
+                    disabled={isLoading}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Email Sign Up Button (shown when not showing form) */}
+              {!showEmailForm && (
                 <TouchableOpacity 
-                  style={[styles.providerButton, styles.facebookButton]}
-                  onPress={handleFacebookSignUp}
-                  disabled={isLoading}
+                  style={[styles.emailSignUpButton, { backgroundColor: colors.glass.backdrop, borderColor: colors.glass.borderLight }]}
+                  onPress={handleEmailSignUp}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="logo-facebook" size={24} color="#1877F2" />
+                  <Ionicons name="mail-outline" size={24} color={colors.accent.primary} />
+                  <Text style={[styles.emailSignUpButtonText, { color: colors.text.primary }]}>Sign up with Email</Text>
                 </TouchableOpacity>
-              </View>
-            </View>
+              )}
 
-            {/* Divider */}
-            <View style={[GlobalStyles.divider, styles.divider]}>
-              <View style={GlobalStyles.dividerLine} />
-              <Text style={GlobalStyles.dividerText}>or</Text>
-              <View style={GlobalStyles.dividerLine} />
-            </View>
+              {/* Clerk Email Sign Up Form */}
+              {showEmailForm && (
+                <View style={[styles.emailFormContainer, { backgroundColor: colors.glass.background, borderColor: colors.glass.border }]}>
+                  <Text style={[styles.formTitle, { color: colors.text.primary }]}>Sign Up with Email</Text>
+                  <EmailSignUpForm 
+                    onSuccess={onSignUpSuccess}
+                    onBack={() => setShowEmailForm(false)}
+                  />
+                </View>
+              )}
 
-            {/* Clerk Email Sign Up Form */}
-            {showEmailForm && (
-              <View style={styles.emailFormContainer}>
-                <Text style={styles.formTitle}>Sign Up with Email</Text>
-                <EmailSignUpForm 
-                  onSuccess={onSignUpSuccess}
-                  onBack={() => setShowEmailForm(false)}
-                />
-              </View>
-            )}
-
-            {/* Email Sign Up Button (shown when not showing form) */}
-            {!showEmailForm && (
-              <TouchableOpacity 
-                style={styles.emailSignUpButton}
-                onPress={handleEmailSignUp}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="mail-outline" size={24} color={Colors.blue.primary} />
-                <Text style={styles.emailSignUpButtonText}>Sign up with Email</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Sign In Link */}
-            <View style={[GlobalStyles.centerContent, styles.signInContainer]}>
-              <Text style={[GlobalStyles.bodyText, styles.signInText]}>
-                Already have an account?{' '}
-                <Text 
-                  style={[GlobalStyles.bodyText, styles.signInLink]}
-                  onPress={onNavigateToSignIn}
-                >
-                  Sign In
+              {/* Sign In Link */}
+              <View style={styles.signInContainer}>
+                <Text style={[styles.signInText, { color: colors.text.secondary }]}>
+                  Already have an account?{' '}
+                  <Text 
+                    style={[styles.signInLink, { color: colors.accent.primary }]}
+                    onPress={onNavigateToSignIn}
+                  >
+                    Sign In
+                  </Text>
                 </Text>
+              </View>
+
+              {/* Legal Text */}
+              <Text style={[styles.legalText, { color: colors.text.tertiary }]}>
+                By continuing, you agree to our Terms of Service and Privacy Policy.
               </Text>
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  backgroundContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  blurOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    justifyContent: 'flex-end',
+  },
+  combinedCard: {
+    borderRadius: 24,
     paddingHorizontal: 24,
-    justifyContent: 'center',
+    paddingVertical: 32,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 16,
   },
-  header: {
+  headerSection: {
     marginBottom: 32,
+    alignItems: 'center',
   },
-  registerTitle: {
+  greeting: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+    opacity: 0.9,
+  },
+  title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.text.primary,
+    letterSpacing: 0.5,
     textAlign: 'center',
   },
-  socialButtonsContainer: {
-    marginBottom: 24,
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 40,
+    fontWeight: '500',
+    opacity: 0.8,
+  },
+  providerButtonsContainer: {
+    marginBottom: 32,
     alignItems: 'center',
   },
   providerButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
   },
   providerButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  emailFormContainer: {
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    marginTop: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -650,67 +732,45 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
-  googleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  appleButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  facebookButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  divider: {
-    marginBottom: 24,
-  },
-  formContainer: {
-    marginBottom: 24,
+    elevation: 4,
   },
   createAccountButton: {
     marginBottom: 24,
   },
-  emailFormContainer: {
-    width: '100%',
+  emailSignUpButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     marginTop: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  emailSignUpButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 12,
   },
   backButton: {
     marginTop: 15,
     alignItems: 'center',
   },
   backButtonText: {
-    color: Colors.text.secondary,
     fontSize: 14,
     textDecorationLine: 'underline',
-  },
-  emailSignUpButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.glass.light,
-    borderWidth: 1,
-    borderColor: Colors.glass.border,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    marginTop: 20,
-  },
-  emailSignUpButtonText: {
-    color: Colors.text.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 12,
   },
   formTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.text.primary,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -721,7 +781,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   signUpButton: {
-    backgroundColor: Colors.blue.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -737,15 +796,22 @@ const styles = StyleSheet.create({
   },
   signInContainer: {
     marginTop: 16,
+    alignItems: 'center',
   },
   signInText: {
     fontSize: 14,
     opacity: 0.8,
   },
   signInLink: {
+    fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',
-    opacity: 1,
+  },
+  legalText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    opacity: 0.7,
   },
   errorText: {
     color: '#FF6B6B',
@@ -765,7 +831,6 @@ const styles = StyleSheet.create({
   requirementsTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.text.primary,
     marginBottom: 8,
   },
   requirementItem: {
